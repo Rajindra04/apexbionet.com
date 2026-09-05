@@ -1,0 +1,177 @@
+{
+  "site": {
+    "brand": "Apex Bionet",
+    "email": "info@apexbionet.com.au",
+    "phone": "+61 450 936 008",
+    "web": "www.apexbionet.com.au",
+    "location": "Maidstone, Victoria, Australia",
+    "fieldNetwork": "Australia & the Indo-Pacific"
+  },
+  "home": {
+    "heroTitle": "Research for the One Health era",
+    "heroLede": "A Melbourne-based contract research organization working across human, animal and environmental health — molecular assay development, bioinformatics, genomics-based pathogen and cancer-marker detection, AMR characterization, analytical chemistry, and multi-site research coordination.",
+    "heroImage": "assets/images/hero.jpg"
+  },
+  "focus": {
+    "heading": "Where genomics, AI and field science meet.",
+    "paragraphs": [
+      "We develop genomics- and AI-driven pathogen and AMR surveillance platforms, detection and diagnostic technologies, and AI-based automation — built to move findings from raw sample to actionable intelligence.",
+      "Every engagement sits somewhere on the One Health interface: the point where human, animal and environmental health intersect, and where outbreaks, resistance and disease actually emerge."
+    ],
+    "pillars": [
+      {
+        "title": "Human health",
+        "description": "Clinical diagnostics, oncology biomarkers, outbreak and resistome surveillance.",
+        "class": "h"
+      },
+      {
+        "title": "Animal health",
+        "description": "Veterinary pathogen panels, vaccine strain typing, farm-level risk intelligence.",
+        "class": "a"
+      },
+      {
+        "title": "Environmental health",
+        "description": "Host-matrix and spillover surveillance across wildlife, vectors and water.",
+        "class": "e"
+      }
+    ]
+  },
+  "contact": {
+    "heading": "Start a conversation.",
+    "lede": "Tell us about the samples, the sequencing, or the surveillance problem — we'll follow up from Maidstone."
+  },
+  "services": [
+    {
+      "id": "assay-development",
+      "number": "01",
+      "title": "Assay Development, Optimization & Validation",
+      "short": "Molecular assay development — infectious disease, cancer & genetic disorders",
+      "description": "Custom qPCR, PCR and next-generation-sequencing-based molecular diagnostic assay design and validation across three domains: pathogen and infectious-disease targets, and oncology biomarkers.",
+      "tags": [
+        "qPCR / PCR",
+        "NGS assay design",
+        "Diagnostic validation",
+        "Pathogen targets",
+        "Oncology biomarkers"
+      ],
+      "image": "assets/images/service-assay.jpg",
+      "figureCaption": "Assay development workflow",
+      "stats": [
+        {
+          "value": "72",
+          "label": "Characterized viral items, including confirmed-positive controls"
+        },
+        {
+          "value": "123",
+          "label": "ACORN-2 clinical isolates, banked as DNA"
+        },
+        {
+          "value": "437",
+          "label": "Host-matrix archives for viral discovery and re-sequencing"
+        },
+        {
+          "value": "186",
+          "label": "Human-interface archive samples, the largest host stratum"
+        }
+      ],
+      "notes": [
+        "Named viral holdings — SARS-CoV-2, influenza A including H7, Newcastle Disease Virus vaccine strain, Canine Distemper Virus, elephant endotheliotropic herpesvirus.",
+        "ACORN-2 isolate bank — Escherichia coli (31), Klebsiella spp. (18), Salmonella Typhi (17), Pseudomonas aeruginosa (15), plus further bacterial items including sewage-derived resistome material.",
+        "Interface-matched hosts — Human (186), Primate (83), Bat (62), Rodent (51), Duck/poultry (13), with paired oral, urine, faecal and blood matrices."
+      ]
+    },
+    {
+      "id": "bioinformatics",
+      "number": "02",
+      "title": "Bioinformatics Analysis & Interpretation",
+      "short": "From raw sequence data to defensible, decision-ready intelligence",
+      "description": "Bioinformatics workflows that turn sequencing data into pathogen profiles, strain characterization, co-infection detection, antimicrobial-resistance signals, and interpretable reports for research and operational decisions.",
+      "tags": [
+        "Read mapping",
+        "Variant analysis",
+        "AMR characterization",
+        "Metagenomics",
+        "Cloud reporting"
+      ],
+      "image": "assets/images/service-bioinformatics.jpg",
+      "figureCaption": "Sequence analysis and interpretation",
+      "stats": [],
+      "notes": [
+        "Custom analysis pipelines can be scoped for clinical, veterinary, environmental, or cross-site surveillance programs.",
+        "Outputs are structured for technical teams, program leads, and partners who need a clear path from sequence evidence to action."
+      ]
+    },
+    {
+      "id": "analytical-chemistry",
+      "number": "03",
+      "title": "Analytical Chemistry",
+      "short": "Method development and quantitative analysis for complex matrices",
+      "description": "A method-driven analytical chemistry capability spanning development, validation, stability, impurity profiling, potency and purity testing, antimicrobial residues, environmental contaminants, pharmacokinetic samples, and quality control.",
+      "tags": [
+        "ICH Q2 validation",
+        "Stability testing",
+        "LC-MS/MS",
+        "HPLC",
+        "Residue analysis",
+        "Extractables & leachables"
+      ],
+      "image": "assets/images/service-chemistry.jpg",
+      "figureCaption": "HPLC chromatogram — resolved peak trace",
+      "stats": [],
+      "notes": [
+        "Method development and validation aligned to ICH Q2.",
+        "Stability testing aligned to ICH Q1A.",
+        "Applications include raw-material identification, residual solvent analysis, food and animal matrices, and environmental screening."
+      ]
+    },
+    {
+      "id": "coordination-partnerships",
+      "number": "04",
+      "title": "Coordination & Partnerships",
+      "short": "Cross-border coordination for multi-site programs",
+      "description": "Hub-and-spoke coordination of multi-site studies across the Indo-Pacific and collaborating institutes — protocol harmonization, sample logistics, and consolidated reporting for programs that span borders and laboratories.",
+      "tags": [
+        "Multi-site study design",
+        "Cross-border sample logistics",
+        "Protocol harmonization",
+        "Consortium data pooling",
+        "Regulatory & ethics liaison"
+      ],
+      "image": "assets/images/service-coordination.jpg",
+      "figureCaption": "Coordination across sites and partners",
+      "stats": [],
+      "notes": [
+        "Programs can be structured around existing laboratories and collaborators, with clear responsibilities, sample movement, SOPs, and reporting cadence."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "veterinary-pathogen-intelligence",
+      "tag": "Animal health · Poultry",
+      "title": "Veterinary Pathogen Intelligence Platform",
+      "short": "Single-tube, multi-pathogen NGS and AI-driven genomic analysis for poultry health — one sample, up to 50 pathogens, a farm-level risk score.",
+      "fullText": "A next-generation poultry health surveillance and diagnostic platform that combines single-tube multi-pathogen NGS, AI-driven genomic analysis, and cloud-based reporting to rapidly identify and characterize the major viral, bacterial, and protozoal pathogens affecting poultry.\n\nThe platform uses a single clinical sample to simultaneously screen for 30–50 pathogens, including respiratory and enteric pathogens, while also identifying virulence factors, antimicrobial-resistance genes, pathogen strains, and vaccine versus field strains.\n\nAn automated cloud pipeline converts sequencing data into actionable veterinary intelligence — pathogen profiles, strain characterization, co-infection detection, AMR risk, farm-level risk scores, and AI-assisted recommendations. A longitudinal surveillance dashboard lets producers and integrators track pathogen trends, emerging variants, and outbreaks across farms.",
+      "vision": "Moving poultry diagnostics from isolated tests toward continuous farm-level intelligence.",
+      "image": "assets/images/project-veterinary.jpg"
+    },
+    {
+      "id": "vector-borne-disease-intelligence",
+      "tag": "One Health · Southeast Asia",
+      "title": "Vector-Borne Disease Intelligence Platform",
+      "short": "A regional surveillance network across the Philippines, Laos and Southeast Asia — predicting outbreaks before they become epidemics.",
+      "fullText": "A regional One Health platform for the surveillance, detection, genomic characterization, risk assessment, and early prediction of vector-borne diseases across Southeast Asia. It integrates data from mosquito vectors, humans, livestock, wildlife, and the environment with pathogen genomics, spatial-temporal analytics, and AI to understand how diseases emerge, spread, and evolve at the human–animal–environment interface.\n\nOngoing work in the Philippines, Laos, and across Southeast Asia is building an integrated surveillance network that combines field-based vector and sentinel-animal surveillance with molecular diagnostics, whole-genome sequencing, environmental and ecological data, and advanced analytics — identifying circulating pathogens and variants, mapping transmission hotspots, and developing early-warning signals for emerging outbreaks.\n\nStarting with diseases such as Japanese encephalitis and other mosquito-borne infections, the platform is designed to evolve into a regional Pathogen and Vector Intelligence System for public health agencies, veterinary services, researchers, and communities.",
+      "vision": "Moving vector-borne disease control from reactive outbreak response to proactive, predictive prevention.",
+      "image": "assets/images/project-vector-borne.jpg"
+    },
+    {
+      "id": "ai-powered-cancer-intelligence",
+      "tag": "Human health · Oncology",
+      "title": "AI-Powered Cancer Intelligence",
+      "short": "Deep-learning analysis of whole-slide histopathology to predict breast cancer biomarkers, backed by the CMDN Cancer Database.",
+      "fullText": "We combine digital pathology, AI, and clinical data to develop intelligent tools for cancer detection and diagnosis. Our current project uses deep-learning analysis of whole-slide histopathology images to predict key breast cancer biomarkers, supported by structured cancer data through the CMDN Cancer Database.\n\nThese capabilities can be applied across hospitals, pathology laboratories, pharmaceutical companies, and CROs to support automated image analysis, diagnostic decision support, biomarker assessment, and precision medicine.",
+      "vision": "Connecting clinical data, pathology, genomics, and AI to deliver smarter, scalable healthcare solutions.",
+      "image": "assets/images/project-cancer.jpg"
+    }
+  ]
+}
