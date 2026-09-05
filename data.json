@@ -78,7 +78,8 @@
         "Named viral holdings — SARS-CoV-2, influenza A including H7, Newcastle Disease Virus vaccine strain, Canine Distemper Virus, elephant endotheliotropic herpesvirus.",
         "ACORN-2 isolate bank — Escherichia coli (31), Klebsiella spp. (18), Salmonella Typhi (17), Pseudomonas aeruginosa (15), plus further bacterial items including sewage-derived resistome material.",
         "Interface-matched hosts — Human (186), Primate (83), Bat (62), Rodent (51), Duck/poultry (13), with paired oral, urine, faecal and blood matrices."
-      ]
+      ],
+      "detailUrl": "service-assay-development.html"
     },
     {
       "id": "bioinformatics",
@@ -99,7 +100,8 @@
       "notes": [
         "Custom analysis pipelines can be scoped for clinical, veterinary, environmental, or cross-site surveillance programs.",
         "Outputs are structured for technical teams, program leads, and partners who need a clear path from sequence evidence to action."
-      ]
+      ],
+      "detailUrl": "service-bioinformatics.html"
     },
     {
       "id": "analytical-chemistry",
@@ -122,7 +124,8 @@
         "Method development and validation aligned to ICH Q2.",
         "Stability testing aligned to ICH Q1A.",
         "Applications include raw-material identification, residual solvent analysis, food and animal matrices, and environmental screening."
-      ]
+      ],
+      "detailUrl": "service-analytical-chemistry.html"
     },
     {
       "id": "coordination-partnerships",
@@ -142,7 +145,8 @@
       "stats": [],
       "notes": [
         "Programs can be structured around existing laboratories and collaborators, with clear responsibilities, sample movement, SOPs, and reporting cadence."
-      ]
+      ],
+      "detailUrl": "service-coordination-partnerships.html"
     }
   ],
   "projects": [
