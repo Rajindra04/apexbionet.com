@@ -21,7 +21,7 @@ Projects:
 
 ## Admin editing
 
-The Admin button is intentionally disabled until a Worker URL is configured. Set this before deployment in `assets/js/site.js` or by adding a small script before it loads:
+Clicking the Admin button now opens a proper username/password login screen. After successful login, the editor opens and shows a signed-in status with a Log out control. Set the Worker URL before deployment in `assets/js/site.js` or by adding a small script before it loads:
 
 ```html
 <script>window.APEX_ADMIN_API_BASE = 'https://your-worker.your-subdomain.workers.dev';</script>
@@ -33,6 +33,7 @@ The editor allows an administrator to log in, edit the structured `data.json` co
 
 Deploy `worker.js` separately to Cloudflare Workers. Configure these secrets/variables:
 
+- `ADMIN_USERNAME` — admin username; defaults to `admin` if omitted
 - `ADMIN_PASSWORD` — admin password
 - `SESSION_SECRET` — random signing secret
 - `GITHUB_TOKEN` — GitHub token with repository contents write permission
@@ -49,6 +50,8 @@ wrangler secret put SESSION_SECRET
 wrangler secret put GITHUB_TOKEN
 wrangler deploy
 ```
+
+Set `ADMIN_USERNAME` as a Worker variable or secret when using a username other than `admin`.
 
 Use a fine-grained GitHub token limited to this repository with Contents: Read and write. Do not put the token in the website files.
 
