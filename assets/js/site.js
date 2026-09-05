@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  var ADMIN_API_BASE = window.APEX_ADMIN_API_BASE= 'https://apex-bionet-admin.rajindra04.workers.dev/'
+  var ADMIN_API_BASE = window.APEX_ADMIN_API_BASE= 'https://apex-bionet-admin.rajindra04.workers.dev/';
   var data = null;
   var page = document.documentElement.getAttribute('data-page') || '';
 
@@ -32,7 +32,7 @@
         if (repeat === 'services') item.detailUrl = 'service-' + item.id + '.html';
         if (repeat === 'projects') item.detailUrl = 'project-' + item.id + '.html';
         bind(node, item);
-        node.querySelectorAll('[data-repeat]').forEach(function (nested) { var nestedValues = get(item, nested.getAttribute('data-repeat')) || [], nestedTemplate = nested.firstElementChild; nested.innerHTML = ''; nestedValues.forEach(function (value) { var child = nestedTemplate.cloneNode(true); child.querySelectorAll('[data-bind]').forEach(function (element) { element.textContent = value; }); nested.appendChild(child); }); });
+        node.querySelectorAll('[data-repeat]').forEach(function (nested) { var nestedValues = get(item, nested.getAttribute('data-repeat')) || [], nestedTemplate = nested.firstElementChild; nested.innerHTML = ''; nestedValues.forEach(function (value) { var child = nestedTemplate.cloneNode(true); if (child.matches('[data-bind]')) child.textContent = String(value); child.querySelectorAll('[data-bind]').forEach(function (element) { element.textContent = String(value); }); nested.appendChild(child); }); });
         container.appendChild(node);
       });
     });
@@ -62,22 +62,49 @@
   function downloadJson(next) { var blob = new Blob([JSON.stringify(next, null, 2) + '\n'], { type: 'application/json' }), url = URL.createObjectURL(blob), anchor = document.createElement('a'); anchor.href = url; anchor.download = 'data.json'; document.body.appendChild(anchor); anchor.click(); anchor.remove(); URL.revokeObjectURL(url); }
   function closeAdmin() { var root = document.getElementById('admin-root'); if (root) root.innerHTML = ''; }
 
-  function editorPanel(token) {
+  function persistPending() {
+    try { sessionStorage.setItem('apexPendingData', JSON.stringify(data)); } catch (error) { console.warn('Could not persist pending edits', error); }
+  }
+
+  function field(label, path, value, multiline) {
+    return '<label>' + esc(label) + '</label>' + (multiline ? '<textarea class="editor-field" data-path="' + esc(path) + '" rows="4">' + esc(value || '') + '</textarea>' : '<input class="editor-field" data-path="' + esc(path) + '" value="' + esc(value || '') + '" type="text">');
+  }
+
+  function itemEditor(item, path, kind, index) {
+    var title = kind === 'service' ? item.title : item.title;
+    var image = kind === 'service' ? item.image : item.image;
+    return '<section class="editor-record"><div class="editor-record-head"><strong>' + esc(title || ('New ' + kind)) + '</strong><button type="button" class="editor-remove" data-remove="' + path + '">Remove</button></div>' + field('Title', path + '.title', title) + (kind === 'service' ? field('Short description', path + '.short', item.short, true) + field('Full description', path + '.description', item.description, true) + field('Image path', path + '.image', image) + field('Tags, comma separated', path + '.tags', (item.tags || []).join(', ')) : field('Category / tag', path + '.tag', item.tag) + field('Short description', path + '.short', item.short, true) + field('Full details', path + '.fullText', item.fullText, true) + field('Project vision', path + '.vision', item.vision, true) + field('Image path', path + '.image', image)) + '<label>Upload replacement image</label><input class="editor-image" data-image-path="' + path + '" type="file" accept="image/*"></section>';
+  }
+
+  function updatePath(object, path, value) {
+    var keys = path.split('.'), last = keys.pop(), target = keys.reduce(function (current, key) { return current[key]; }, object); target[last] = value;
+  }
+  function removePath(object, path) {
+    var keys = path.split('.'), last = keys.pop(), target = keys.reduce(function (current, key) { return current[key]; }, object); if (Array.isArray(target)) target.splice(Number(last), 1); else delete target[last];
+  }
+
+  function structuredEditor(token) {
     var root = document.getElementById('admin-root');
-    root.innerHTML = '<div class="admin-backdrop"></div><aside class="admin-panel"><button class="admin-close" aria-label="Close">×</button><div class="admin-session"><span class="admin-session-dot"></span>Admin signed in <button id="admin-logout" type="button">Log out</button></div><h2>Site editor</h2><p class="admin-help">Edit the structured content below. Save to GitHub commits it to the repository. Download data.json is available as a manual fallback.</p><label>Content JSON</label><textarea id="admin-json" rows="18"></textarea><label>Upload image</label><input id="admin-image" type="file" accept="image/*"><div class="admin-actions"><button class="btn btn--dark" id="admin-save">Save to GitHub</button><button class="btn btn--dark" id="admin-download">Download data.json</button></div><div class="admin-status" id="admin-status"></div></aside>';
-    var panel = root.querySelector('.admin-panel'), jsonField = panel.querySelector('#admin-json');
-    jsonField.value = JSON.stringify(data, null, 2);
-    root.querySelector('.admin-backdrop').onclick = closeAdmin; root.querySelector('.admin-close').onclick = closeAdmin;
-    panel.querySelector('#admin-logout').onclick = function () { sessionStorage.removeItem('apexAdminToken'); closeAdmin(); };
-    panel.querySelector('#admin-download').onclick = function () { try { downloadJson(JSON.parse(jsonField.value)); panel.querySelector('#admin-status').textContent = 'Downloaded data.json. Upload it to the repository root to publish changes.'; } catch (error) { panel.querySelector('#admin-status').textContent = 'Invalid JSON: ' + error.message; } };
+    var serviceRecords = data.services.map(function (item, index) { return itemEditor(item, 'services.' + index, 'service', index); }).join('');
+    var projectRecords = data.projects.map(function (item, index) { return itemEditor(item, 'projects.' + index, 'project', index); }).join('');
+    root.innerHTML = '<div class="admin-backdrop"></div><aside class="admin-panel admin-structured"><button class="admin-close" aria-label="Close">×</button><div class="admin-session"><span class="admin-session-dot"></span>Admin signed in <button id="admin-logout" type="button">Log out</button></div><h2>Site editor</h2><p class="admin-help">Edit content in sections below. Changes are kept in this browser until you save them to GitHub.</p><div class="editor-section"><h3>Site details</h3>' + field('Brand name', 'site.brand', data.site.brand) + field('Email', 'site.email', data.site.email) + field('Phone', 'site.phone', data.site.phone) + field('Location', 'site.location', data.site.location) + '</div><div class="editor-section"><h3>Home page</h3>' + field('Hero title', 'home.heroTitle', data.home.heroTitle) + field('Hero introduction', 'home.heroLede', data.home.heroLede, true) + '</div><div class="editor-section"><h3>Focus page</h3>' + field('Heading', 'focus.heading', data.focus.heading) + field('First paragraph', 'focus.paragraphs.0', data.focus.paragraphs[0], true) + field('Second paragraph', 'focus.paragraphs.1', data.focus.paragraphs[1], true) + '</div><div class="editor-section"><h3>Services <button type="button" class="editor-add" data-add="service">+ Add service</button></h3><div id="editor-services">' + serviceRecords + '</div></div><div class="editor-section"><h3>Projects <button type="button" class="editor-add" data-add="project">+ Add project</button></h3><div id="editor-projects">' + projectRecords + '</div></div><div class="editor-section"><h3>Contact page</h3>' + field('Heading', 'contact.heading', data.contact.heading) + field('Introduction', 'contact.lede', data.contact.lede, true) + '</div><div class="admin-actions editor-actions"><button class="btn btn--primary" id="admin-save">Save changes to GitHub</button><button class="btn btn--dark" id="admin-download">Download data.json</button></div><div class="admin-status" id="admin-status">No unsaved changes.</div></aside>';
+    var panel = root.querySelector('.admin-panel');
+    var imageUploads = {};
+    function close() { root.innerHTML = ''; }
+    root.querySelector('.admin-backdrop').onclick = close; root.querySelector('.admin-close').onclick = close;
+    panel.querySelector('#admin-logout').onclick = function () { sessionStorage.removeItem('apexAdminToken'); close(); };
+    function markChanged() { persistPending(); panel.querySelector('#admin-status').textContent = 'Unsaved changes — click Save changes to publish them.'; }
+    panel.querySelectorAll('.editor-field').forEach(function (input) { input.addEventListener('input', function () { var value = input.value; if (input.dataset.path.endsWith('.tags')) value = value.split(',').map(function (tag) { return tag.trim(); }).filter(Boolean); updatePath(data, input.dataset.path, value); var record = input.closest('.editor-record'); if (record && input.dataset.path.endsWith('.title')) record.querySelector('.editor-record-head strong').textContent = value || 'Untitled'; markChanged(); }); });
+    panel.querySelectorAll('.editor-image').forEach(function (input) { input.addEventListener('change', function () { var file = input.files[0]; if (!file) return; var reader = new FileReader(); reader.onload = function () { imageUploads[input.dataset.imagePath] = { name: file.name, base64: reader.result }; panel.querySelector('#admin-status').textContent = 'Image selected — save to upload it.'; }; reader.readAsDataURL(file); }); });
+    panel.querySelectorAll('[data-remove]').forEach(function (button) { button.onclick = function () { removePath(data, button.dataset.remove); persistPending(); structuredEditor(token); }; });
+    panel.querySelectorAll('[data-add]').forEach(function (button) { button.onclick = function () { if (button.dataset.add === 'service') data.services.push({id:'new-service-'+Date.now(),number:String(data.services.length + 1).padStart(2,'0'),title:'New service',short:'',description:'',tags:[],image:'assets/images/service-assay.jpg',figureCaption:'',stats:[],notes:[]}); else data.projects.push({id:'new-project-'+Date.now(),tag:'New project',title:'New project',short:'',fullText:'',vision:'',image:'assets/images/project-veterinary.jpg'}); persistPending(); structuredEditor(token); }; });
+    panel.querySelector('#admin-download').onclick = function () { var blob = new Blob([JSON.stringify(data, null, 2) + '\n'], {type:'application/json'}), url = URL.createObjectURL(blob), anchor = document.createElement('a'); anchor.href = url; anchor.download = 'data.json'; document.body.appendChild(anchor); anchor.click(); anchor.remove(); URL.revokeObjectURL(url); panel.querySelector('#admin-status').textContent = 'Downloaded data.json.'; };
     panel.querySelector('#admin-save').onclick = function () {
-      var status = panel.querySelector('#admin-status'), next;
+      var status = panel.querySelector('#admin-status'), images = [], entries = Object.keys(imageUploads);
       if (!token) { status.textContent = 'Your login session has expired. Please log in again.'; return; }
-      try { next = JSON.parse(jsonField.value); } catch (error) { status.textContent = 'Invalid JSON: ' + error.message; return; }
-      var file = panel.querySelector('#admin-image').files[0];
-      var send = function (images) { fetch(apiUrl('/save'), { method: 'POST', headers: {'Content-Type':'application/json', 'Authorization':'Bearer ' + token}, body: JSON.stringify({ dataJson: next, images: images, commitMessage: 'Admin: update Apex Bionet content' }) }).then(function (response) { return response.json().then(function (body) { return { ok: response.ok, body: body }; }); }).then(function (result) { if (!result.ok) throw Error(result.body.error || 'Save failed'); data = next; status.textContent = 'Saved to GitHub successfully.'; }).catch(function (error) { status.textContent = error.message; }); };
-      if (!file) { send([]); return; }
-      var reader = new FileReader(); reader.onload = function () { send([{ path: 'assets/images/admin-' + Date.now() + '-' + file.name.replace(/[^a-z0-9._-]/gi, '-'), base64: reader.result }]); }; reader.readAsDataURL(file);
+      entries.forEach(function (path) { var upload = imageUploads[path], target = path.split('.').reduce(function (obj, key) { return obj[key]; }, data); var clean = upload.name.replace(/[^a-z0-9._-]/gi, '-'); var publicPath = 'assets/images/admin-' + Date.now() + '-' + clean; target.image = publicPath; images.push({path:publicPath, base64:upload.base64}); });
+      status.textContent = 'Saving…';
+      fetch(apiUrl('/save'), {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({dataJson:data,images:images,commitMessage:'Admin: update Apex Bionet content'})}).then(function (response) { return response.json().then(function (body) { return {ok:response.ok,body:body}; }); }).then(function (result) { if (!result.ok) throw Error(result.body.error || 'Save failed'); sessionStorage.removeItem('apexPendingData'); status.textContent = 'Saved to GitHub successfully.'; }).catch(function (error) { status.textContent = error.message; });
     };
   }
 
@@ -91,14 +118,14 @@
       event.preventDefault();
       if (!ADMIN_API_BASE) { status.textContent = 'GitHub login is not connected yet. Deploy the Worker and set APEX_ADMIN_API_BASE, or choose offline editor below.'; return; }
       var submit = panel.querySelector('.admin-login-submit'); submit.disabled = true; submit.textContent = 'Signing in…'; status.textContent = '';
-      fetch(apiUrl('/login'), { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ username: form.username.value.trim(), password: form.password.value }) }).then(function (response) { return response.json().then(function (body) { return { ok: response.ok, body: body }; }); }).then(function (result) { if (!result.ok) throw Error(result.body.error || 'Incorrect username or password.'); sessionStorage.setItem('apexAdminToken', result.body.token); editorPanel(result.body.token); }).catch(function (error) { submit.disabled = false; submit.textContent = 'Sign in'; status.textContent = error.message; });
+      fetch(apiUrl('/login'), { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ username: form.username.value.trim(), password: form.password.value }) }).then(function (response) { return response.json().then(function (body) { return { ok: response.ok, body: body }; }); }).then(function (result) { if (!result.ok) throw Error(result.body.error || 'Incorrect username or password.'); sessionStorage.setItem('apexAdminToken', result.body.token); structuredEditor(result.body.token); }).catch(function (error) { submit.disabled = false; submit.textContent = 'Sign in'; status.textContent = error.message; });
     });
   }
 
-  function initAdmin() { document.querySelectorAll('.admin-open').forEach(function (button) { button.addEventListener('click', function () { var token = sessionStorage.getItem('apexAdminToken'); if (token && ADMIN_API_BASE) editorPanel(token); else loginPanel(); }); }); }
+  function initAdmin() { document.querySelectorAll('.admin-open').forEach(function (button) { button.addEventListener('click', function () { var token = sessionStorage.getItem('apexAdminToken'); if (token && ADMIN_API_BASE) structuredEditor(token); else loginPanel(); }); }); }
 
   initNav(); initAdmin();
   var embedded = document.getElementById('detail-data');
   var promise = embedded ? Promise.resolve(JSON.parse(embedded.textContent)) : fetch('data.json').then(function (response) { if (!response.ok) throw Error('Content file returned ' + response.status); return response.json(); });
-  promise.then(function (loaded) { data = loaded; document.querySelectorAll('[data-bind]').forEach(function (element) { var value = get(data, element.getAttribute('data-bind')); if (value !== undefined && typeof value !== 'object') element.textContent = value; }); renderRepeats(); renderDetail(); bind(document, data); document.querySelectorAll('[data-href="emailHref"]').forEach(function (element) { element.href = 'mailto:' + data.site.email; }); document.querySelectorAll('[data-href="phoneHref"]').forEach(function (element) { element.href = 'tel:' + data.site.phone.replace(/\s/g, ''); }); document.querySelectorAll('[data-href="webHref"]').forEach(function (element) { element.href = 'https://' + data.site.web; }); initForm(); }).catch(function (error) { console.error(error); var detail = document.getElementById('detail-content'); if (detail) detail.innerHTML = '<h1>Unable to load this page content</h1><p>Please redeploy the complete site package, including data.json.</p>'; });
+  promise.then(function (loaded) { var pending = sessionStorage.getItem('apexPendingData'); data = pending ? JSON.parse(pending) : loaded; document.querySelectorAll('[data-bind]').forEach(function (element) { var value = get(data, element.getAttribute('data-bind')); if (value !== undefined && typeof value !== 'object') element.textContent = value; }); renderRepeats(); renderDetail(); bind(document, data); document.querySelectorAll('[data-href="emailHref"]').forEach(function (element) { element.href = 'mailto:' + data.site.email; }); document.querySelectorAll('[data-href="phoneHref"]').forEach(function (element) { element.href = 'tel:' + data.site.phone.replace(/\s/g, ''); }); document.querySelectorAll('[data-href="webHref"]').forEach(function (element) { element.href = 'https://' + data.site.web; }); initForm(); }).catch(function (error) { console.error(error); var detail = document.getElementById('detail-content'); if (detail) detail.innerHTML = '<h1>Unable to load this page content</h1><p>Please redeploy the complete site package, including data.json.</p>'; });
 }());

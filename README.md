@@ -33,14 +33,17 @@ The public pages load their copy, service records, project records, image paths,
 
 For simple maintenance, edit `data.json`, commit the change to GitHub, and let GitHub Pages redeploy the site.
 
-## Browser-based admin editing
+## Browser-based interactive admin editing
 
-The site also includes an **Admin** button and editor panel. The editor supports:
+The site includes an **Admin** button and a structured editor modeled on the interactive workflow in the referenced Nirvana Biotech repository. After login, the editor supports:
 
-- Logging in with a password
-- Editing the structured site JSON
-- Uploading an image
-- Saving the updated JSON and image to GitHub through a separate Cloudflare Worker
+- Editing site, home, focus, contact, service, and project fields through labeled controls
+- Adding and removing services and projects
+- Editing service tags as a comma-separated list
+- Uploading replacement images for service and project records
+- Keeping pending changes in the browser while moving between pages
+- Downloading `data.json` as a manual fallback
+- Saving the updated JSON and image files to GitHub through a Cloudflare Worker
 
 The Admin button is intentionally inactive until a Worker URL is configured. Add the Worker URL to `assets/js/site.js` or inject it before that script loads:
 
