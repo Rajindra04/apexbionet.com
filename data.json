@@ -78,8 +78,7 @@
         "Named viral holdings — SARS-CoV-2, influenza A including H7, Newcastle Disease Virus vaccine strain, Canine Distemper Virus, elephant endotheliotropic herpesvirus.",
         "ACORN-2 isolate bank — Escherichia coli (31), Klebsiella spp. (18), Salmonella Typhi (17), Pseudomonas aeruginosa (15), plus further bacterial items including sewage-derived resistome material.",
         "Interface-matched hosts — Human (186), Primate (83), Bat (62), Rodent (51), Duck/poultry (13), with paired oral, urine, faecal and blood matrices."
-      ],
-      "detailUrl": "service-assay-development.html"
+      ]
     },
     {
       "id": "bioinformatics",
@@ -100,8 +99,7 @@
       "notes": [
         "Custom analysis pipelines can be scoped for clinical, veterinary, environmental, or cross-site surveillance programs.",
         "Outputs are structured for technical teams, program leads, and partners who need a clear path from sequence evidence to action."
-      ],
-      "detailUrl": "service-bioinformatics.html"
+      ]
     },
     {
       "id": "analytical-chemistry",
@@ -124,8 +122,7 @@
         "Method development and validation aligned to ICH Q2.",
         "Stability testing aligned to ICH Q1A.",
         "Applications include raw-material identification, residual solvent analysis, food and animal matrices, and environmental screening."
-      ],
-      "detailUrl": "service-analytical-chemistry.html"
+      ]
     },
     {
       "id": "coordination-partnerships",
@@ -145,8 +142,7 @@
       "stats": [],
       "notes": [
         "Programs can be structured around existing laboratories and collaborators, with clear responsibilities, sample movement, SOPs, and reporting cadence."
-      ],
-      "detailUrl": "service-coordination-partnerships.html"
+      ]
     }
   ],
   "projects": [
@@ -157,8 +153,7 @@
       "short": "Single-tube, multi-pathogen NGS and AI-driven genomic analysis for poultry health — one sample, up to 50 pathogens, a farm-level risk score.",
       "fullText": "A next-generation poultry health surveillance and diagnostic platform that combines single-tube multi-pathogen NGS, AI-driven genomic analysis, and cloud-based reporting to rapidly identify and characterize the major viral, bacterial, and protozoal pathogens affecting poultry.\n\nThe platform uses a single clinical sample to simultaneously screen for 30–50 pathogens, including respiratory and enteric pathogens, while also identifying virulence factors, antimicrobial-resistance genes, pathogen strains, and vaccine versus field strains.\n\nAn automated cloud pipeline converts sequencing data into actionable veterinary intelligence — pathogen profiles, strain characterization, co-infection detection, AMR risk, farm-level risk scores, and AI-assisted recommendations. A longitudinal surveillance dashboard lets producers and integrators track pathogen trends, emerging variants, and outbreaks across farms.",
       "vision": "Moving poultry diagnostics from isolated tests toward continuous farm-level intelligence.",
-      "image": "assets/images/project-veterinary.jpg",
-      "detailUrl": "project-veterinary-pathogen-intelligence.html"
+      "image": "assets/images/admin-1788670871330-project-vector-borne.jpg"
     },
     {
       "id": "vector-borne-disease-intelligence",
@@ -167,8 +162,7 @@
       "short": "A regional surveillance network across the Philippines, Laos and Southeast Asia — predicting outbreaks before they become epidemics.",
       "fullText": "A regional One Health platform for the surveillance, detection, genomic characterization, risk assessment, and early prediction of vector-borne diseases across Southeast Asia. It integrates data from mosquito vectors, humans, livestock, wildlife, and the environment with pathogen genomics, spatial-temporal analytics, and AI to understand how diseases emerge, spread, and evolve at the human–animal–environment interface.\n\nOngoing work in the Philippines, Laos, and across Southeast Asia is building an integrated surveillance network that combines field-based vector and sentinel-animal surveillance with molecular diagnostics, whole-genome sequencing, environmental and ecological data, and advanced analytics — identifying circulating pathogens and variants, mapping transmission hotspots, and developing early-warning signals for emerging outbreaks.\n\nStarting with diseases such as Japanese encephalitis and other mosquito-borne infections, the platform is designed to evolve into a regional Pathogen and Vector Intelligence System for public health agencies, veterinary services, researchers, and communities.",
       "vision": "Moving vector-borne disease control from reactive outbreak response to proactive, predictive prevention.",
-      "image": "assets/images/admin-1788663316471-Vector_borne.jpg",
-      "detailUrl": "project-vector-borne-disease-intelligence.html"
+      "image": "assets/images/project-vector-borne.jpg"
     },
     {
       "id": "ai-powered-cancer-intelligence",
@@ -177,8 +171,7 @@
       "short": "Deep-learning analysis of whole-slide histopathology to predict breast cancer biomarkers, backed by the CMDN Cancer Database.",
       "fullText": "We combine digital pathology, AI, and clinical data to develop intelligent tools for cancer detection and diagnosis. Our current project uses deep-learning analysis of whole-slide histopathology images to predict key breast cancer biomarkers, supported by structured cancer data through the CMDN Cancer Database.\n\nThese capabilities can be applied across hospitals, pathology laboratories, pharmaceutical companies, and CROs to support automated image analysis, diagnostic decision support, biomarker assessment, and precision medicine.",
       "vision": "Connecting clinical data, pathology, genomics, and AI to deliver smarter, scalable healthcare solutions.",
-      "image": "assets/images/admin-1788663239309-cancer.jpg",
-      "detailUrl": "project-ai-powered-cancer-intelligence.html"
+      "image": "assets/images/project-cancer.jpg"
     }
   ]
 }
