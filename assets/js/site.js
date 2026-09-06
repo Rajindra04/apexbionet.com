@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  var ADMIN_API_BASE = window.APEX_ADMIN_API_BASE || '';
+  var ADMIN_API_BASE = window.APEX_ADMIN_API_BASE = 'https://apex-bionet-admin.rajindra04.workers.dev';
   var data = null;
   var page = document.documentElement.getAttribute('data-page') || '';
 
