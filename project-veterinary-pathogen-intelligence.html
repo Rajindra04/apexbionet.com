@@ -5,7 +5,7 @@
   --shadow:0 1px 2px rgba(18,43,50,.06),0 10px 26px -14px rgba(18,43,50,.22);
   margin-top:56px; padding:52px 0 12px; border-top:1px solid var(--bg-a-line, #c3e3cb);
 }
-:root[data-theme="dark"] .poultry-pipeline{--bg:#0b1f1f;--surface:#102826;--surface-2:#153330;--ink:#e8f3ee;--ink-soft:#b7cfc8;--muted:#87a49c;--border:#254743;--border-strong:#356158;--gold:#e0b558;--gold-ink:#eec37c;}
+:root[data-theme="dark"] .poultry-pipeline{--bg:#0d2119;--surface:#101a1f;--surface-2:#153330;--ink:#eef4f3;--ink-soft:rgba(238,244,243,.76);--muted:rgba(238,244,243,.56);--border:#1a3729;--border-strong:#356158;--gold:#ffd75e;--gold-ink:#241c02;}
 .poultry-pipeline .pipeline-intro{margin-bottom:22px;}
 .poultry-pipeline .pipeline-intro h2{font-size:clamp(28px,3.5vw,40px);margin:8px 0 0;}
 .poultry-pipeline .pipeline-intro p{max-width:70ch;color:var(--ink-soft);font-size:16px;margin:12px 0 0;}
@@ -122,6 +122,43 @@
   }
 
   .poultry-pipeline footer{margin-top:36px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted); text-align:center;}
+</style><style>
+/* Integrated pipeline visual treatment: inherit the host project page rather than using a separate page background. */
+.poultry-pipeline{
+  --bg:var(--bg-b);
+  --surface:#fffefb;
+  --surface-2:color-mix(in srgb,var(--surface) 72%,var(--bg-b) 28%);
+  --ink:#122029;
+  --ink-soft:rgba(18,32,41,.74);
+  --muted:rgba(18,32,41,.56);
+  --border:var(--bg-b-line);
+  --border-strong:color-mix(in srgb,var(--forest) 42%,var(--bg-b-line) 58%);
+  --gold:var(--yellow);
+  --gold-ink:#241c02;
+  background:var(--bg-b);
+  border-top:1px solid var(--bg-b-line);
+  margin-top:0;
+  padding:62px 0 82px;
+}
+.poultry-pipeline .pipeline-intro,
+.poultry-pipeline .pipeline-wrap{max-width:1160px;margin-left:auto;margin-right:auto;padding-left:28px;padding-right:28px;}
+.poultry-pipeline .pipeline-intro{margin-bottom:24px;}
+.poultry-pipeline .pipeline-intro h2{font-family:'Source Serif 4',serif;text-transform:none;letter-spacing:0;font-size:clamp(28px,3.4vw,38px);margin-top:14px;}
+.poultry-pipeline .pipeline-intro p{color:var(--ink-70);font-size:16.5px;max-width:66ch;margin-top:14px;}
+.poultry-pipeline .highlights{margin-bottom:22px;}
+.poultry-pipeline .hl{background:var(--surface);border-color:var(--bg-b-line);color:var(--ink-70);}
+.poultry-pipeline .diagram-card,.poultry-pipeline .detail{border-color:var(--bg-b-line);border-radius:var(--radius);box-shadow:var(--shadow);}
+.poultry-pipeline .diagram-card{padding:22px 18px 10px;}
+.poultry-pipeline .detail{margin-top:18px;}
+.poultry-pipeline .node-circle{fill:color-mix(in srgb,var(--surface) 70%,var(--bg-b) 30%);stroke:var(--border-strong);}
+.poultry-pipeline .node-hit:hover .node-circle{stroke:var(--yellow);}
+.poultry-pipeline .node-hit[data-active="true"] .node-circle{fill:var(--yellow);stroke:var(--yellow);}
+.poultry-pipeline .flow-line{stroke:var(--border-strong);}
+.poultry-pipeline .tag{background:color-mix(in srgb,var(--surface) 68%,var(--bg-b) 32%);border-color:var(--bg-b-line);}
+@media(max-width:640px){
+  .poultry-pipeline{padding:48px 0 62px;}
+  .poultry-pipeline .pipeline-intro,.poultry-pipeline .pipeline-wrap{padding-left:20px;padding-right:20px;}
+}
 </style></head><body><div class="page"><header class="nav" id="top"><div class="nav__inner"><a class="nav__brand" href="index.html" aria-label="Apex Bionet — home"><span class="brandmark"><img class="nav__logo" src="assets/images/logo.jpg" alt="Apex Bionet"></span></a><nav class="nav__links" id="navLinks" aria-label="Primary navigation"><a href="index.html" data-page="home">Home</a><a href="focus.html" data-page="focus">Focus</a><a href="services.html" data-page="services">Services</a><a href="projects.html" data-page="projects">Projects</a><a href="contact.html" data-page="contact">Contact</a></nav><button class="btn btn--primary btn--sm admin-open" type="button">Admin</button><button class="nav__toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false"><span></span></button></div></header><main id="main-content"><section class="section sec-b detail-page"><div class="wrap"><a class="back-link" data-back-link href="services.html">← Back</a><div id="detail-content"></div></div></section><section class="poultry-pipeline" aria-labelledby="poultry-pipeline-title">
   <div class="pipeline-intro">
     <span class="eyebrow"><span class="sq"></span>Additional project workflow</span>
@@ -248,7 +285,7 @@
   let stored = null;
   try{ stored = localStorage.getItem("pipeline-theme"); }catch(e){}
   if(stored) root.setAttribute("data-theme", stored);
-  themeBtn.addEventListener("click", () => {
+  if(themeBtn) themeBtn.addEventListener("click", () => {
     const sysDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const current = root.getAttribute("data-theme") || (sysDark ? "dark":"light");
     const next = current === "dark" ? "light" : "dark";
