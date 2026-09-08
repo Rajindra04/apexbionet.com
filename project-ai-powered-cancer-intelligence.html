@@ -1,3 +1,8 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI-Powered Cancer Intelligence · Apex Bionet</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
@@ -448,6 +453,41 @@
   .credit-list li{display:flex; gap:10px; font-size:13.5px; color:var(--ink-soft);}
   .credit-list b{color:var(--ink); min-width:150px; display:inline-block; font-family:'IBM Plex Sans',sans-serif;}
 </style>
+</head>
+<body>
+<style>
+  #gnav{position:sticky;top:0;z-index:1000;background:#122029;border-bottom:4px solid #ffc93c;
+    font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;}
+  #gnav .gnav-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:64px;
+    display:flex;align-items:center;gap:22px;}
+  #gnav .gnav-brand{display:flex;align-items:center;gap:8px;text-decoration:none;
+    font-family:'Fraunces',Georgia,serif;font-weight:600;color:#fff;font-size:16px;flex:none;}
+  #gnav .gnav-brand img{height:30px;width:auto;display:block;border-radius:4px;background:#fff;padding:2px 5px;}
+  #gnav .gnav-links{display:flex;gap:20px;flex-wrap:wrap;margin-left:8px;}
+  #gnav .gnav-links a{color:rgba(255,255,255,.82);text-decoration:none;font-size:13.5px;
+    letter-spacing:.02em;padding:6px 0;border-bottom:2px solid transparent;transition:color .15s ease,border-color .15s ease;}
+  #gnav .gnav-links a:hover{color:#fff;border-color:#ffc93c;}
+  #gnav .gnav-note{margin-left:auto;color:rgba(255,255,255,.55);font-size:11.5px;
+    font-family:'IBM Plex Mono',monospace;white-space:nowrap;}
+  @media (max-width:760px){
+    #gnav .gnav-inner{height:auto;flex-wrap:wrap;padding:12px 20px;gap:10px 16px;}
+    #gnav .gnav-note{display:none;}
+  }
+</style>
+<nav id="gnav" aria-label="Apex Bionet site navigation">
+  <div class="gnav-inner">
+    <a class="gnav-brand" href="index.html"><img src="assets/images/logo.jpg" alt="Apex Bionet"> Apex Bionet</a>
+    <div class="gnav-links">
+      <a href="index.html">Home</a>
+      <a href="focus.html">Focus</a>
+      <a href="services.html">Services</a>
+      <a href="projects.html">Projects</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <span class="gnav-note">AI-Powered Cancer Intelligence &mdash; project report</span>
+  </div>
+</nav>
+
 
 <div class="masthead">
   <div class="shell masthead-top">
@@ -1139,3 +1179,6 @@
 
 })();
 </script>
+
+</body>
+</html>
