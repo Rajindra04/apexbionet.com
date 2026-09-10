@@ -138,9 +138,16 @@
   }
 
   function controls(buttonsHtml) { return '<div class="editable-controls edit-only">' + buttonsHtml.join('') + '</div>'; }
-  function ep(path, label, multiline) { return '<button class="edit-pencil" onclick="window.__apexEdit(' + JSON.stringify(path) + ',' + (multiline ? 'true' : 'false') + ')">' + esc(label) + '</button>'; }
-  function elp(path, label, kind) { return '<button class="edit-pencil" onclick="window.__apexListEdit(' + JSON.stringify(path) + ',' + JSON.stringify(kind) + ')">' + esc(label) + '</button>'; }
-  function imgBtn(path) { return '<button class="editable-img-btn edit-only" onclick="window.__apexImageEdit(' + JSON.stringify(path) + ')">Photo</button>'; }
+  // JSON.stringify uses double quotes, and these get embedded inside a
+  // double-quoted onclick="..." HTML attribute — without escaping, the
+  // first quote in the JSON output prematurely closes the attribute and
+  // corrupts the markup, silently breaking the button. aj() escapes those
+  // quotes as HTML entities so the browser decodes them back to real
+  // quotes before the JS ever runs.
+  function aj(value) { return JSON.stringify(value).replace(/"/g, '&quot;'); }
+  function ep(path, label, multiline) { return '<button class="edit-pencil" onclick="window.__apexEdit(' + aj(path) + ',' + (multiline ? 'true' : 'false') + ')">' + esc(label) + '</button>'; }
+  function elp(path, label, kind) { return '<button class="edit-pencil" onclick="window.__apexListEdit(' + aj(path) + ',' + aj(kind) + ')">' + esc(label) + '</button>'; }
+  function imgBtn(path) { return '<button class="editable-img-btn edit-only" onclick="window.__apexImageEdit(' + aj(path) + ')">Photo</button>'; }
 
   window.__apexEdit = function (path, multiline) { promptTextEdit(path, multiline); };
   window.__apexListEdit = function (path, kind) { promptListEdit(path, kind); };
@@ -433,10 +440,10 @@
         var base = node.dataset.fullpath;
         if (node.querySelector(':scope > .editable-controls')) return;
         var idx = base.split('.').pop();
-        node.insertAdjacentHTML('beforeend', controls([ep(base + '.title', 'Edit title'), ep(base + '.description', 'Edit text', true), '<button class="edit-pencil danger" onclick="window.__apexRemoveItem(' + JSON.stringify('focus.pillars') + ',' + idx + ')">Remove</button>']));
+        node.insertAdjacentHTML('beforeend', controls([ep(base + '.title', 'Edit title'), ep(base + '.description', 'Edit text', true), '<button class="edit-pencil danger" onclick="window.__apexRemoveItem(' + aj('focus.pillars') + ',' + idx + ')">Remove</button>']));
       });
       if (!container.nextElementSibling || !container.nextElementSibling.classList.contains('add-item-btn')) {
-        container.insertAdjacentHTML('afterend', '<button class="add-item-btn edit-only" onclick="window.__apexAddItem(' + JSON.stringify('focus.pillars') + ')">+ Add pillar</button>');
+        container.insertAdjacentHTML('afterend', '<button class="add-item-btn edit-only" onclick="window.__apexAddItem(' + aj('focus.pillars') + ')">+ Add pillar</button>');
       }
     });
 
@@ -450,12 +457,12 @@
           ep(base + '.number', 'Edit number'), ep(base + '.title', 'Edit title'), ep(base + '.short', 'Edit summary', true),
           ep(base + '.description', 'Edit full description', true), ep(base + '.figureCaption', 'Edit caption'),
           elp(base + '.tags', 'Edit tags', 'csv'),
-          '<button class="edit-pencil danger" onclick="window.__apexRemoveItem(' + JSON.stringify('services') + ',' + idx + ')">Remove service</button>'
+          '<button class="edit-pencil danger" onclick="window.__apexRemoveItem(' + aj('services') + ',' + idx + ')">Remove service</button>'
         ];
         node.insertAdjacentHTML('beforeend', '<div class="editable-controls svc edit-only">' + extraBtns.join('') + '</div>');
       });
       if (!container.nextElementSibling || !container.nextElementSibling.classList.contains('add-item-btn')) {
-        container.insertAdjacentHTML('afterend', '<button class="add-item-btn edit-only" onclick="window.__apexAddItem(' + JSON.stringify('services') + ')">+ Add service</button>');
+        container.insertAdjacentHTML('afterend', '<button class="add-item-btn edit-only" onclick="window.__apexAddItem(' + aj('services') + ')">+ Add service</button>');
       }
     });
 
@@ -467,11 +474,11 @@
         if (img) { var p = img.parentElement; if (getComputedStyle(p).position === 'static') p.style.position = 'relative'; if (!p.querySelector('.editable-img-btn')) p.insertAdjacentHTML('beforeend', imgBtn(base + '.image')); }
         node.insertAdjacentHTML('beforeend', controls([
           ep(base + '.tag', 'Edit tag'), ep(base + '.title', 'Edit title'), ep(base + '.short', 'Edit summary', true),
-          '<button class="edit-pencil danger" onclick="window.__apexRemoveItem(' + JSON.stringify('projects') + ',' + idx + ')">Remove project</button>'
+          '<button class="edit-pencil danger" onclick="window.__apexRemoveItem(' + aj('projects') + ',' + idx + ')">Remove project</button>'
         ]));
       });
       if (!container.nextElementSibling || !container.nextElementSibling.classList.contains('add-item-btn')) {
-        container.insertAdjacentHTML('afterend', '<button class="add-item-btn edit-only" onclick="window.__apexAddItem(' + JSON.stringify('projects') + ')">+ Add project</button>');
+        container.insertAdjacentHTML('afterend', '<button class="add-item-btn edit-only" onclick="window.__apexAddItem(' + aj('projects') + ')">+ Add project</button>');
       }
     });
   }
