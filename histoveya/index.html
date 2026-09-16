@@ -1,0 +1,2809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Histoveya AI | South Asian histopathology and AI portal</title>
+<meta name="description" content="A South Asian histopathology atlas: whole-slide images with harmonised diagnoses, and the attention models trained on them.">
+<link rel="icon" type="image/png" href="elements/histoveya-mark.png">
+<link rel="apple-touch-icon" href="elements/histoveya-mark.png">
+<script>
+/* Runs before the body paints, so a reload never flashes the wrong theme.
+   Keep it inline and synchronous here: deferring it reintroduces the flash.
+   Unset or unreadable storage means light, which is the first-visit default. */
+try{var t=localStorage.getItem("theme");
+    if(t==="dark")document.documentElement.setAttribute("data-theme","dark");}catch(e){}
+</script>
+<style>
+/* ============================================================
+   Histoveya AI. Front-end draft. See web_app.md.
+   ============================================================ */
+:root{
+  /* ---- brand ramp. Fixed in both themes. House colours, not surfaces:
+          anything a theme should be able to move lives below instead.  */
+  --navy-900:#0b1f3a; --navy-800:#123055; --navy-700:#1c4373; --navy-600:#2a5c96;
+  --teal-700:#194e60;   /* logo ink, secondary brand tone */
+  --accent-500:#c9642c; --accent-300:#e08a4a;
+
+  /* ---- semantic tokens. The dark block below overrides this list and
+          nothing else, so a new rule themes itself if it uses these.   */
+  color-scheme:light;   /* native checkboxes, selects, scrollbars */
+  --bg:#f2f6fb;         /* page behind everything           */
+  --surface:#fff;       /* cards, header, tables, forms     */
+  --surface-2:#f2f6fb;  /* tinted panels, table head, hover */
+  --surface-3:#e3ecf6;  /* chips, active nav, feature badge */
+  --line:#d8e0e9;       /* borders and rules                */
+  --ink-900:#10181f; --ink-600:#4a5763; --ink-400:#7d8894;
+  --grid:#e8edf3;       /* chart gridlines, meter tracks    */
+
+  /* bands that are dark in BOTH themes: utility strip, section index,
+     footer, citation box. They deepen in dark so they stay separable
+     from the page instead of merging into it.                         */
+  --band:#0b1f3a; --band-2:#123055;
+  --on-band:#9fb3cc; --on-band-2:#c9d8ea; --on-band-3:#dbe7f2;
+
+  /* brand colours used as FOREGROUND, split from the fills above: a
+     navy that works as a fill is invisible as text on navy.           */
+  --heading:#0b1f3a;    /* strong headings on a light surface */
+  --figure:#123055;     /* big numerals: stat band, callouts  */
+  --brand-fg:#1c4373;   /* IDs, counts, ghost button text     */
+  --link:#2a5c96;       /* links, hover borders, focus rings  */
+  --control:#1c4373;    /* accent-color on checkboxes         */
+
+  /* accent, split the same way. --accent-600 is the FILL that carries
+     white text; --accent-fg is the accent as text or as a rule.       */
+  --accent-600:#b2531f; --accent-fg:#b2531f; --accent-050:#fbf1ea; --todo-fg:#7a3a14;
+  --field:#fff; --field-line:#d8e0e9;   /* inputs: see the dark block */
+  --wordmark:#194e60;   /* the SET wordmark, not the logo artwork */
+
+  /* status. Reserved, never branding. */
+  --fail-600:#cc0000; --fail-050:#fdecec;
+  --pass-fg:#20705e;  --pass-bg:#e6f4f0;
+  --rev-fg:#96600a;   --rev-bg:#fdf1de;
+
+  /* categorical series, fixed order, validated for CVD on a white surface */
+  --s1:#2a5c96; --s2:#b2531f; --s3:#1baf7a; --s4:#eda100;
+  --s5:#e87ba4; --s6:#008300; --s7:#4a3aa7; --s8:#eb6834;
+  --s-other:#9aa6b2;
+  /* single-hue sequential / ordinal blue */
+  --q1:#86b6ef; --q2:#5598e7; --q3:#2a78d6; --q4:#184f95;
+  --c1:#2a5c96; --c2:#b2531f; --c3:#1baf7a; --c4:#eda100;
+  --c5:#e87ba4; --c6:#008300; --c7:#4a3aa7; --c8:#eb6834;
+  --mono:"JetBrains Mono","SF Mono",Consolas,"Liberation Mono",monospace;
+  --sans:"Inter","Segoe UI",system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  --shadow:0 1px 2px rgba(16,24,31,.06),0 4px 16px rgba(16,24,31,.06);
+  --wrap:1320px;
+}
+
+/* =====================================================================
+   DARK THEME
+   A token swap, never a filter. Nothing in here touches an <img>, the
+   slide imagery or the logo: those render identically in both themes.
+   Surfaces deepen the existing navy rather than going to black, so the
+   page still reads as the same product with the lights off.
+   ===================================================================== */
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#05101c;
+  --surface:#0c1e31;
+  --surface-2:#0a1828;
+  --surface-3:#17314d;
+  --line:#22394f;
+  --ink-900:#e9eff7; --ink-600:#aabdd0; --ink-400:#8b9db0;
+  --grid:#1b3049;
+
+  --band:#030b14; --band-2:#0a1a2b;
+  --on-band:#a7bacd; --on-band-2:#cddbea; --on-band-3:#e2ebf4;
+
+  --heading:#eaf2fa;
+  --figure:#dce8f5;
+  --brand-fg:#8fbdf0;
+  --link:#84b6ec;
+  --control:#4a8ede;
+
+  /* the fill keeps its value so white text on it stays above 5:1; only
+     the text form lifts. Same copper, recognisable in both themes.    */
+  --accent-600:#b2531f; --accent-fg:#f0a06b; --accent-050:#2b1a11; --todo-fg:#f3c3a3;
+  /* a field the same colour as its card is invisible on dark, so the
+     well sinks below the surface and the border lifts above it     */
+  --field:#061523; --field-line:#4d6e8a;   /* 3.1:1 on the card: WCAG 1.4.11 */
+  /* the logo ink is too dark to read on a dark header. This is the
+     wordmark SET IN TYPE, not the artwork, so it is safe to lift.  */
+  --wordmark:#7cbdd2;
+
+  --fail-600:#ff9a9a; --fail-050:#3c1418;
+  --pass-fg:#74dcb8;  --pass-bg:#0d3029;
+  --rev-fg:#ebb763;   --rev-bg:#342710;
+
+  /* the categorical palette was validated against white. These are the
+     same hues lifted for a dark ground and have NOT been re-run through
+     the validator. See web_app.md section 3.8 before trusting them.    */
+  --s1:#6fa8e8; --s2:#e08a4a; --s3:#3fd4a0; --s4:#f2bb3d;
+  --s5:#f09cbc; --s6:#4cc24c; --s7:#9a8ae8; --s8:#f58a5c;
+  --s-other:#7f8d9b;
+  --q1:#1d4675; --q2:#2a6aad; --q3:#4a90d9; --q4:#86b6ef;
+  --c1:#6fa8e8; --c2:#e08a4a; --c3:#3fd4a0; --c4:#f2bb3d;
+  --c5:#f09cbc; --c6:#4cc24c; --c7:#9a8ae8; --c8:#f58a5c;
+
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--sans);font-size:14px;line-height:1.6;color:var(--ink-900);
+  background:var(--bg);-webkit-font-smoothing:antialiased}
+a{color:var(--link);text-decoration:none}
+a:hover{text-decoration:underline}
+h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+img{max-width:100%;display:block}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent-fg);outline-offset:2px}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 24px}
+.mono{font-family:var(--mono)}
+.muted{color:var(--ink-400)}
+.hide{display:none !important}
+
+/* ---------- utility bar ---------- */
+.utility{background:var(--band);color:var(--on-band);font-size:12px}
+.utility .wrap{display:flex;align-items:center;justify-content:space-between;height:34px}
+.utility a{color:var(--on-band-3);text-decoration:underline;text-underline-offset:2px;
+  text-decoration-color:rgba(198,214,230,.35)}
+.utility a:hover{color:#fff}
+.utility .u-right a{text-decoration:none;color:var(--on-band)}
+.utility .u-right a:hover{color:#fff}
+.utility .u-right{display:flex;gap:20px}
+
+/* ---------- header ---------- */
+header.site{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+.hrow{position:relative;display:flex;align-items:center;gap:24px;height:96px}
+.brand{display:flex;align-items:center;gap:16px;flex-shrink:0;color:inherit}
+.brand:hover{text-decoration:none;opacity:.82}
+.brand .lg-mark{height:60px;width:auto}
+/*WORDMARK*/
+/* Georgia has no light face and the page loads no webfonts, so weight,
+   tracking and size are the only levers here. Medium over the old bold.  */
+.wordmark{font-size:26px;font-weight:500;letter-spacing:-.005em;color:var(--wordmark);line-height:1;
+  white-space:nowrap;font-family:Georgia,"Times New Roman",serif;text-transform:uppercase}
+/*ENDWORDMARK*/
+.wordmark .ai{color:var(--wordmark)}
+.wordmark small{display:block;font-size:9.5px;font-weight:600;letter-spacing:.13em;font-family:var(--sans);
+  text-transform:uppercase;color:var(--ink-400);margin-top:6px}
+.hactions{margin-left:auto;display:flex;align-items:center;gap:10px;flex-shrink:0}
+
+/* secondary to the button beside it: no fill, smaller, quieter until hovered */
+.themetoggle{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;
+  padding:0;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink-600)}
+.themetoggle:hover{color:var(--brand-fg);border-color:var(--link);background:var(--surface-2)}
+.themetoggle:focus-visible{outline:2px solid var(--link);outline-offset:2px;color:var(--brand-fg)}
+.themetoggle svg{display:block}
+.themetoggle .ic-sun{display:none}
+:root[data-theme="dark"] .themetoggle .ic-sun{display:block}
+:root[data-theme="dark"] .themetoggle .ic-moon{display:none}
+.navrow{border-top:1px solid var(--line);background:var(--surface-2)}
+.navrow .wrap{display:flex;align-items:center;gap:2px;height:46px}
+.navrow .relnote{margin-left:auto;font-size:12px;color:var(--ink-400);font-weight:600}
+nav.main{display:flex;gap:2px}
+nav.main a{padding:7px 13px;border-radius:6px;color:var(--ink-600);font-weight:600;font-size:13.5px}
+nav.main a:hover{background:var(--surface);color:var(--brand-fg);text-decoration:none}
+nav.main a.active{color:var(--brand-fg);background:var(--surface-3)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:38px;padding:0 16px;
+  border-radius:6px;border:1px solid transparent;font-weight:600;font-size:13.5px;white-space:nowrap}
+.btn:hover{text-decoration:none}
+.btn-primary{background:var(--navy-700);color:#fff}
+.btn-primary:hover{background:var(--navy-800)}
+.btn-accent{background:var(--accent-600);color:#fff}
+.btn-accent:hover{background:var(--accent-500)}
+.btn-ghost{background:var(--surface);color:var(--brand-fg);border-color:var(--line)}
+.btn-ghost:hover{border-color:var(--link);background:var(--surface-2)}
+.btn-sm{height:30px;padding:0 11px;font-size:12.5px}
+
+/* ---- dark-theme fixups that are not a token swap ----
+   The mark is dark teal ink with no light-on-dark version, so in dark it
+   gets a light plate rather than being recoloured. Replace this rule with
+   a plain swap the moment a light version of the artwork exists.        */
+:root[data-theme="dark"] .brand .lg-mark{background:#eaf1f7;border-radius:9px;padding:5px}
+/* the hero search sits on the slideshow in both themes; dark needs an
+   edge or the field disappears into the image                          */
+:root[data-theme="dark"] .searchbig{border:1px solid var(--line)}
+/* the viewer surround is deliberately dark in BOTH themes, so it only
+   needs its seam against the page softened                             */
+:root[data-theme="dark"] .viewer{border-color:#24384c}
+
+/* ---------- hero ---------- */
+.hero{position:relative;background:linear-gradient(160deg,var(--navy-900) 0%,var(--navy-700) 55%,#25507f 100%);
+  color:#fff;overflow:hidden}
+.heroshow{position:absolute;inset:0;filter:brightness(.52) saturate(1.3)}
+.hs-layer{position:absolute;inset:0;background-size:cover;background-position:center;
+  opacity:0;transition:opacity 1.1s ease;will-change:transform,opacity}
+.hs-layer.on{opacity:1}
+.hero-scrim{position:absolute;inset:0;background:
+  linear-gradient(102deg,rgba(11,31,58,.93) 0%,rgba(11,31,58,.82) 46%,rgba(28,67,115,.62) 100%)}
+.hero .wrap{position:relative;padding:74px 24px 66px;max-width:1080px}
+.hero .eyebrow{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--accent-300);padding:0 0 4px;border-bottom:2px solid rgba(224,138,74,.8)}
+.hero h1{font-size:44px;margin:20px 0 0;max-width:19ch}
+.hero h1 em{font-style:normal;color:var(--accent-300)}
+.hero p.lede{font-size:17px;line-height:1.6;color:var(--on-band-2);max-width:66ch;margin:16px 0 0}
+.searchbig{margin-top:30px;display:flex;max-width:720px;background:var(--surface);border-radius:8px;padding:6px;
+  box-shadow:0 10px 30px rgba(0,0,0,.22)}
+.searchbig input{flex:1;border:0;padding:0 14px;font-size:15px;font-family:inherit;color:var(--ink-900);background:transparent}
+.searchbig input:focus{outline:none}
+.searchbig .btn{height:42px;padding:0 22px}
+.examples{margin-top:16px;font-size:13px;color:#a9bdd4;display:flex;flex-wrap:wrap;gap:20px;align-items:center}
+.examples button{background:none;border:0;border-bottom:1px solid rgba(255,255,255,.34);color:#dce8f5;
+  border-radius:0;padding:1px 0 2px;font-size:13px}
+.examples button:hover{background:none;color:#fff;border-bottom-color:#fff}
+
+/* ---------- stat band ---------- */
+.statband{background:var(--surface);border-bottom:1px solid var(--line)}
+.statband .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:0;padding:0 24px}
+.stat{padding:26px 20px;border-right:1px solid var(--line)}
+.stat:last-child{border-right:0}
+.stat .n{font-size:34px;font-weight:700;letter-spacing:-.03em;color:var(--figure);line-height:1.1;
+  font-variant-numeric:tabular-nums}
+.stat .n .u{font-size:16px;color:var(--ink-400);font-weight:600}
+.stat .l{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-400);margin-top:6px}
+
+/* ---------- generic section ---------- */
+section.band{padding:56px 0}
+section.band.alt{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.sec-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px;gap:20px}
+.sec-head h2{font-size:26px}
+.sec-head p{margin:6px 0 0;color:var(--ink-600);max-width:70ch}
+.kicker{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-fg);margin-bottom:8px}
+
+/* ---------- organ cards ---------- */
+.organgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.organ{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:15px 16px 14px;display:block;
+  color:inherit;transition:border-color .14s,box-shadow .14s}
+.organ:hover{border-color:var(--link);box-shadow:var(--shadow);text-decoration:none}
+.organ .o-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.organ .o-name{font-weight:700;font-size:14.5px;color:var(--heading);letter-spacing:-.01em}
+.organ .o-n{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--brand-fg);line-height:1}
+.organ .o-track{height:4px;border-radius:2px;background:var(--grid);margin:11px 0 9px;overflow:hidden}
+.organ .o-track i{display:block;height:100%;border-radius:2px;background:var(--link)}
+.organ .o-share{font-family:var(--mono);font-size:11px;color:var(--ink-400)}
+.organ .o-dx{font-size:12px;color:var(--ink-600);margin-top:5px;line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:32px}
+.organ:hover .o-track i{background:var(--accent-600)}
+
+/* ---------- feature columns ---------- */
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.feat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:24px}
+.feat h3{font-size:17px;margin-bottom:8px}
+.feat p{margin:0;color:var(--ink-600);font-size:13.5px}
+.feat .num{font-family:var(--mono);font-size:12px;color:var(--accent-fg);font-weight:700;margin-bottom:12px;display:block}
+
+/* ---------- release timeline ---------- */
+.timeline{border-left:2px solid var(--line);margin-left:8px;padding-left:24px;display:grid;gap:22px}
+.rel{position:relative}
+.rel:before{content:"";position:absolute;left:-31px;top:5px;width:11px;height:11px;border-radius:50%;
+  background:var(--surface);border:2px solid var(--link)}
+.rel.latest:before{background:var(--accent-600);border-color:var(--accent-fg)}
+.rel .d{font-family:var(--mono);font-size:12px;color:var(--ink-400)}
+.rel h4{font-size:15px;margin:2px 0 4px}
+.rel p{margin:0;color:var(--ink-600);font-size:13.5px}
+.tag{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.16em;padding:0;
+  color:var(--accent-fg);margin-left:12px;vertical-align:2px}
+
+/* ---------- citation box ---------- */
+.citebox{background:var(--band);color:var(--on-band-2);border-radius:10px;padding:24px 26px}
+.citebox h3{color:#fff;font-size:17px;margin-bottom:10px}
+.citebox code{display:block;font-family:var(--mono);font-size:12.5px;line-height:1.7;color:#a9c4e2;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:14px;white-space:pre-wrap}
+/* ---------- numbered sections ---------- */
+.secindex{background:var(--band);position:sticky;top:142px;z-index:40}
+.secindex .wrap{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;padding:0 24px}
+.secindex .wrap::-webkit-scrollbar{display:none}
+.secindex a{display:flex;align-items:baseline;gap:8px;padding:12px 15px;font-size:12.5px;font-weight:600;
+  color:#8ea7c2;border-bottom:2px solid transparent;white-space:nowrap}
+.secindex a:hover{color:#fff;text-decoration:none}
+.secindex a b{font-size:12px;color:#5f7a99;font-weight:700}
+.secindex a.on{color:#fff;border-bottom-color:var(--accent-300)}
+.secindex a.on b{color:var(--accent-300)}
+
+section.band.num{padding:64px 0;scroll-margin-top:190px}
+.hero{scroll-margin-top:0}
+.snum{display:flex;align-items:flex-start;gap:26px;padding-bottom:22px;margin-bottom:26px;
+  border-bottom:1px solid var(--line)}
+.snum .sn{font-family:var(--mono);font-size:38px;font-weight:700;line-height:.9;color:var(--line);
+  letter-spacing:-.04em;flex-shrink:0;padding-top:2px}
+.snum .st{flex:1;min-width:0}
+.snum h2{font-size:27px}
+.snum p{margin:8px 0 0;color:var(--ink-600);max-width:74ch}
+.snum .btn{flex-shrink:0;margin-top:4px}
+
+/* ---------- 01: spec panels ---------- */
+.specrow{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:26px}
+.spec{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:22px 24px}
+section.band.alt .spec{background:var(--surface-2)}
+.spec h3{font-size:15px;margin-bottom:14px}
+.spec p{margin:0 0 12px;color:var(--ink-600);font-size:13.5px}
+dl.speclist{margin:0;display:grid;grid-template-columns:auto 1fr;gap:0}
+dl.speclist dt{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-400);padding:10px 18px 10px 0;border-top:1px solid var(--line);white-space:nowrap}
+dl.speclist dd{margin:0;font-size:13px;color:var(--ink-900);padding:10px 0;border-top:1px solid var(--line)}
+dl.speclist dt:first-of-type,dl.speclist dd:first-of-type{border-top:0;padding-top:0}
+code.cmd{display:block;font-family:var(--mono);font-size:12px;background:var(--surface-2);
+  border:1px solid var(--line);border-radius:6px;padding:12px;color:var(--figure);white-space:pre-wrap}
+section.band.alt code.cmd{background:var(--surface)}
+.spec .fine{font-size:12.5px;color:var(--ink-400);margin:12px 0 0}
+
+/* ---------- 02 / 03 blocks ---------- */
+.cols3.four{grid-template-columns:repeat(4,1fr)}
+.splitnote{margin-top:22px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:22px 24px}
+section.band.alt .splitnote{background:var(--surface-2)}
+.splitnote h3{font-size:15px;margin-bottom:8px}
+.splitnote p{margin:0 0 10px;color:var(--ink-600);font-size:13.5px;max-width:82ch}
+.viewernote{margin-top:22px;background:var(--band);color:var(--on-band-2);border-radius:10px;padding:24px 26px;
+  display:flex;align-items:center;gap:28px}
+.viewernote h3{color:#fff;font-size:16px;margin-bottom:8px}
+.viewernote p{margin:0;font-size:13.5px;max-width:82ch}
+.viewernote .btn-ghost{flex-shrink:0;background:transparent;color:var(--on-band-3);border-color:rgba(255,255,255,.3)}
+.viewernote .btn-ghost:hover{background:rgba(255,255,255,.09);border-color:#fff;color:#fff}
+
+/* ---------- 02: about ---------- */
+.aboutgrid{display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:start}
+.aboutlogo{background:#fff;border:1px solid var(--line);border-radius:10px;padding:26px;
+  display:flex;justify-content:center;margin-bottom:20px}
+.aboutlogo img{height:150px;width:auto}
+.abouttext{color:var(--ink-600);font-size:13.5px;margin:0 0 14px;max-width:70ch}
+h3.ah{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-400);
+  margin:26px 0 16px;padding-top:18px;border-top:1px solid var(--line)}
+.callouts{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.callout{background:var(--surface);padding:16px 14px}
+.callout .cn{display:block;font-size:26px;font-weight:700;letter-spacing:-.03em;color:var(--figure);
+  line-height:1.05;font-variant-numeric:tabular-nums}
+.callout .cl{display:block;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink-400);margin-top:7px;line-height:1.35}
+.contribute{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent-fg);
+  border-radius:0 10px 10px 0;padding:22px 24px}
+.contribute h3{font-size:16px;margin-bottom:10px}
+.contribute p{margin:0 0 12px;color:var(--ink-600);font-size:13.5px}
+
+/* ---------- open questions, shown rather than hidden ---------- */
+.todo{background:var(--accent-050);border-left:3px solid var(--accent-fg);border-radius:0 6px 6px 0;
+  padding:11px 14px;font-size:12.5px;color:var(--todo-fg);margin:0}
+.todo b{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--accent-fg);margin-right:7px}
+.todo-inline{font-family:var(--mono);font-size:11.5px;background:var(--accent-050);color:var(--accent-fg);
+  border-bottom:1px dashed var(--accent-600);padding:1px 4px}
+
+/* ---------- draft-only bypass (delete with the markup) ---------- */
+.bypass{margin-top:18px;border:1px dashed var(--ink-400);border-radius:10px;padding:18px 20px;
+  background:repeating-linear-gradient(135deg,transparent,transparent 9px,rgba(125,136,148,.07) 9px,rgba(125,136,148,.07) 18px)}
+.bypass .bl{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--ink-400);border:1px solid var(--ink-400);
+  border-radius:3px;padding:2px 7px;margin-bottom:10px}
+.bypass p{margin:0 0 14px;font-size:12.5px;color:var(--ink-600);max-width:56ch}
+
+/* ---------- registration gate ---------- */
+.gatebar{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;background:var(--accent-050);
+  border:1px solid var(--accent-fg);border-left:3px solid var(--accent-fg);border-radius:0 8px 8px 0;
+  padding:13px 16px;margin:22px 0 0;font-size:13.5px;color:var(--todo-fg)}
+.gatebar b{color:var(--accent-fg)}
+.draftbar{background:var(--band-2);color:var(--on-band-2);font-size:12.5px}
+.draftbar .wrap{display:flex;align-items:center;gap:12px;padding-top:9px;padding-bottom:9px}
+.draftbar b{color:#fff}
+.draftbar button{margin-left:auto;background:none;border:1px solid rgba(255,255,255,.28);color:var(--on-band-2);
+  border-radius:5px;height:24px;padding:0 9px;font-size:11.5px;font-weight:600;flex-shrink:0}
+.draftbar button:hover{border-color:#fff;color:#fff}
+.herocta{margin-top:26px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.herocta .gatenote{font-size:12.5px;color:#a9bdd4}
+
+/* ---------- footer ---------- */
+footer.site{background:var(--band);color:var(--on-band);padding:48px 0 26px;margin-top:0}
+footer.site .cols{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:36px}
+footer.site h5{color:#fff;font-size:12px;letter-spacing:.09em;text-transform:uppercase;margin:0 0 12px;font-weight:700}
+footer.site a{color:var(--on-band);display:block;padding:3px 0;font-size:13.5px}
+footer.site .about p a{display:inline;padding:0;color:var(--on-band-3);text-decoration:underline;
+  text-underline-offset:2px;text-decoration-color:rgba(219,231,242,.4)}
+footer.site .about p a:hover{color:#fff;text-decoration-color:#fff}
+footer.site a:hover{color:#fff}
+footer.site .about p{font-size:13.5px;margin:0 0 14px;max-width:44ch}
+footer .legal{border-top:1px solid rgba(255,255,255,.12);margin-top:34px;padding-top:18px;display:flex;
+  justify-content:space-between;gap:14px 28px;font-size:12.5px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<style>
+/* ---------- browse layout ---------- */
+.pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 0 0}
+.crumb{font-size:12.5px;color:var(--ink-400);margin-bottom:8px}
+.crumb a{color:var(--ink-400)}
+.pagehead h1{font-size:26px}
+.pagehead .sub{color:var(--ink-600);margin:6px 0 0;font-size:13.5px}
+.tabs{display:flex;gap:2px;margin-top:18px}
+.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;font-weight:600;
+  font-size:13.5px;color:var(--ink-600)}
+.tabs button.on{color:var(--figure);border-bottom-color:var(--accent-fg)}
+.browse{display:grid;grid-template-columns:280px minmax(0,1fr);gap:26px;padding:26px 0 60px;align-items:start}
+
+.facets{background:var(--surface);border:1px solid var(--line);border-radius:10px;position:sticky;top:158px}
+.facets .fh{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
+.facets .fh h3{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-600)}
+.facets .fh button{background:none;border:0;color:var(--accent-fg);font-size:12.5px;font-weight:600;padding:0}
+.facet{border-bottom:1px solid var(--line)}
+.facet:last-child{border-bottom:0}
+.facet > summary{list-style:none;cursor:pointer;padding:11px 16px;font-weight:700;font-size:13px;color:var(--heading);
+  display:flex;align-items:center;justify-content:space-between}
+.facet > summary::-webkit-details-marker{display:none}
+.facet > summary:after{content:"";width:7px;height:7px;border-right:2px solid var(--ink-400);
+  border-bottom:2px solid var(--ink-400);transform:rotate(45deg);margin-top:-4px;transition:transform .15s}
+.facet[open] > summary:after{transform:rotate(-135deg);margin-top:2px}
+.facet .opts{padding:0 16px 12px;max-height:210px;overflow:auto}
+.opt{display:flex;align-items:center;gap:9px;padding:4px 0;font-size:13px;color:var(--ink-600);cursor:pointer}
+.opt:hover{color:var(--ink-900)}
+.opt input{accent-color:var(--control);width:14px;height:14px;margin:0}
+.opt .cnt{margin-left:auto;font-size:11.5px;color:var(--ink-400);font-family:var(--mono)}
+
+.resbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);
+  border-radius:10px;padding:12px 14px;margin-bottom:14px}
+#fToggle{display:none}
+.resbar .count{font-weight:700;font-size:14px}
+.resbar .count b{color:var(--brand-fg)}
+.resbar .grow{flex:1}
+.srch{display:flex;align-items:center;gap:8px;border:1px solid var(--field-line);border-radius:6px;padding:0 10px;height:34px;
+  background:var(--field);min-width:230px}
+.srch input{border:0;background:transparent;font-family:inherit;font-size:13px;width:100%;color:var(--ink-900)}
+.srch input:focus{outline:none}
+select.ctl{height:34px;border:1px solid var(--field-line);border-radius:6px;background:var(--field);font-family:inherit;
+  font-size:13px;padding:0 8px;color:var(--ink-600)}
+.toggle{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.toggle button{background:var(--surface);border:0;padding:0 11px;height:34px;font-size:12.5px;font-weight:600;color:var(--ink-600)}
+.toggle button.on{background:var(--navy-700);color:#fff}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.chip{display:inline-flex;align-items:center;gap:7px;background:var(--surface-3);color:var(--figure);
+  border-radius:99px;padding:4px 6px 4px 12px;font-size:12.5px;font-weight:600}
+.chip button{background:rgba(11,31,58,.12);border:0;border-radius:50%;width:17px;height:17px;line-height:1;
+  color:var(--figure);font-size:12px;display:flex;align-items:center;justify-content:center;padding:0}
+.chip button:hover{background:var(--accent-600);color:#fff}
+
+/* ---------- results table ---------- */
+.tblwrap{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+table.res{width:100%;min-width:1150px;border-collapse:collapse}
+table.res th{text-align:left;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-400);
+  padding:11px 12px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
+table.res td{padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px;line-height:1.35;vertical-align:middle;white-space:nowrap}
+table.res tr:last-child td{border-bottom:0}
+table.res tbody tr{cursor:pointer}
+table.res tbody tr:hover{background:var(--surface-2)}
+td.id a{font-family:var(--mono);font-size:12.5px;font-weight:600}
+.thumb{width:52px;height:38px;border-radius:4px;border:1px solid var(--line);overflow:hidden;flex-shrink:0}
+.dx{max-width:300px;white-space:normal !important}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px}
+.b-pass{background:var(--pass-bg);color:var(--pass-fg)}
+.b-rev{background:var(--rev-bg);color:var(--rev-fg)}
+.b-fail{background:var(--fail-050);color:var(--fail-600)}
+.b-feat{background:var(--surface-3);color:var(--brand-fg)}
+
+/* ---------- grid mode ---------- */
+.cardgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.scard{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;
+  transition:border-color .12s,transform .12s}
+.scard:hover{border-color:var(--link);transform:translateY(-2px)}
+.scard .im{aspect-ratio:4/3;border-bottom:1px solid var(--line);position:relative}
+.scard .im .qc{position:absolute;top:8px;right:8px}
+.scard .bd{padding:11px 12px}
+.scard .sid{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--brand-fg)}
+.scard .dxt{font-size:13px;font-weight:600;margin:3px 0 4px;line-height:1.3}
+.scard .mt{font-size:11.5px;color:var(--ink-400)}
+
+.pager{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;flex-wrap:wrap}
+.pager .pg{display:flex;gap:5px}
+.pager .pg button{min-width:32px;height:32px;border:1px solid var(--line);background:var(--surface);border-radius:6px;
+  font-size:13px;color:var(--ink-600);font-weight:600}
+.pager .pg button.on{background:var(--navy-700);border-color:var(--navy-700);color:#fff}
+.pager .pg button:disabled{opacity:.4;cursor:default}
+
+/* ---------- slide detail ---------- */
+.slidehead{background:var(--surface);border-bottom:1px solid var(--line);padding:20px 0}
+.slidehead .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.slidehead h1{font-family:var(--mono);font-size:24px;letter-spacing:-.01em}
+.slidehead .acts{margin-left:auto;display:flex;gap:9px}
+.slidelayout{display:grid;grid-template-columns:1fr 360px;gap:22px;padding:22px 0 60px;align-items:start}
+.viewer{background:#0d1218;border:1px solid #1d2733;border-radius:10px;overflow:hidden}
+.viewer .vtop{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#131b24;
+  border-bottom:1px solid #1d2733;color:#8ea3b8;font-size:12.5px;flex-wrap:wrap}
+.viewer .vtop .sp{flex:1}
+.viewer .vtop{flex-wrap:nowrap}
+.vbtn{white-space:nowrap}
+.vbtn{background:#1d2733;border:1px solid #2b3947;color:var(--on-band-3);border-radius:5px;height:28px;padding:0 10px;
+  font-size:12px;font-weight:600}
+.vbtn:hover{background:#28374a}
+.vbtn.on{background:var(--navy-600);border-color:var(--navy-600);color:#fff}
+.canvas{position:relative;height:520px;overflow:hidden;background:#12171d;cursor:grab}
+.canvas:active{cursor:grabbing}
+.canvas .stage{position:absolute;left:50%;top:50%;transform-origin:center;transition:transform .12s ease-out}
+.canvas .heat{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .25s;mix-blend-mode:multiply}
+.canvas .heat.on{opacity:.7}
+.navigator{position:absolute;right:12px;top:12px;width:132px;border:1px solid rgba(255,255,255,.35);
+  border-radius:4px;overflow:hidden;background:#000}
+.navigator .box{position:absolute;border:1.5px solid var(--accent-300);background:rgba(224,138,74,.16)}
+.scalebar{position:absolute;left:14px;bottom:14px;color:var(--on-band-3);font-size:11px;font-family:var(--mono);
+  background:rgba(0,0,0,.55);padding:5px 9px;border-radius:4px;display:flex;align-items:center;gap:8px}
+.scalebar i{display:block;width:72px;height:3px;background:var(--on-band-3)}
+.zoomrow{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#131b24;border-top:1px solid #1d2733}
+.zoomrow input[type=range]{flex:1;accent-color:var(--accent-fg)}
+.zoomrow .zv{font-family:var(--mono);font-size:12px;color:#8ea3b8;min-width:52px;text-align:right}
+
+.rail{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;position:sticky;top:158px}
+.rail .rtabs{display:flex;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.rail .rtabs button{flex:1;background:none;border:0;padding:11px 4px;font-size:12.5px;font-weight:700;
+  color:var(--ink-600);border-bottom:3px solid transparent}
+.rail .rtabs button.on{color:var(--figure);background:var(--surface);border-bottom-color:var(--accent-fg)}
+.rail .rbody{padding:6px 16px 16px;max-height:560px;overflow:auto}
+dl.meta{margin:0;display:grid;grid-template-columns:auto 1fr;gap:0}
+dl.meta dt{font-size:12px;color:var(--ink-400);padding:9px 14px 9px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+dl.meta dd{margin:0;font-size:13px;font-weight:600;padding:9px 0;border-bottom:1px solid var(--line);text-align:right}
+dl.meta dd.m{font-family:var(--mono);font-weight:600;font-size:12.5px}
+.note{background:var(--surface-2);border:1px solid var(--line);border-left:3px solid var(--link);
+  border-radius:6px;padding:11px 13px;font-size:12.5px;color:var(--ink-600);margin-top:14px}
+.relwrap{grid-column:1 / -1;margin-top:8px}
+.related{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:14px}
+
+/* below this the absolutely centred wordmark would collide with the logos,
+   so it drops back into the flex flow beside them */
+/* ------------------------- analytics ------------------------------- */
+.vizbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);
+  border-radius:10px;padding:12px 14px;margin-bottom:18px}
+.vizbar label{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-400)}
+.vizbar .scope{margin-left:auto;font-size:13px;color:var(--ink-600)}
+.vizbar .scope b{color:var(--brand-fg);font-family:var(--mono)}
+.vizgrid{display:grid;grid-template-columns:repeat(12,1fr);gap:18px;padding-bottom:60px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px 16px;min-width:0}
+.card h3{font-size:15px;margin:0}
+.card .sub{font-size:12.5px;color:var(--ink-400);margin:3px 0 0}
+.card .ch{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
+.card .ch .tv{background:none;border:1px solid var(--line);border-radius:6px;color:var(--ink-600);
+  font-size:11.5px;font-weight:700;padding:4px 9px;white-space:nowrap}
+.card .tv:hover{border-color:var(--link);color:var(--brand-fg)}
+.card .tv.on{background:var(--navy-700);border-color:var(--navy-700);color:#fff}
+.span4{grid-column:span 4}.span5{grid-column:span 5}.span6{grid-column:span 6}
+.span7{grid-column:span 7}.span8{grid-column:span 8}.span12{grid-column:span 12}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.kpi .n{font-size:30px;font-weight:700;letter-spacing:-.03em;color:var(--figure);line-height:1.1}
+.kpi .n small{font-size:14px;color:var(--ink-400);font-weight:600}
+.kpi .l{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-400);margin-top:5px}
+.kpi .d{font-size:12px;color:var(--ink-600);margin-top:6px}
+svg.viz{display:block;width:100%;overflow:visible}
+svg.viz text{font-family:var(--sans);fill:var(--ink-600)}
+svg.viz .ax{font-size:11px;fill:var(--ink-400)}
+svg.viz .vl{font-size:11.5px;font-weight:700;fill:var(--ink-600);font-family:var(--mono)}
+svg.viz .gl{stroke:var(--grid);stroke-width:1}
+svg.viz .mk{cursor:pointer;transition:opacity .12s}
+svg.viz .mk:hover{opacity:.78}
+svg.viz .dim{opacity:.28}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:14px}
+.legend div{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-600);cursor:pointer}
+.legend i{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.legend b{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--ink-400);font-weight:700}
+.legend div.off{opacity:.4}
+.viztip{position:fixed;z-index:200;pointer-events:none;background:var(--band);color:#fff;border-radius:7px;
+  padding:8px 11px;font-size:12.5px;line-height:1.45;box-shadow:0 6px 22px rgba(11,31,58,.3);opacity:0;
+  transition:opacity .12s;max-width:260px}
+.viztip.on{opacity:1}
+.viztip b{display:block;font-size:13px;margin-bottom:2px}
+.viztip span{color:#a9c4e2;font-family:var(--mono);font-size:11.5px}
+table.dt{width:100%;border-collapse:collapse;margin-top:6px}
+table.dt th{text-align:left;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-400);
+  padding:6px 8px;border-bottom:1px solid var(--line)}
+table.dt td{padding:6px 8px;border-bottom:1px solid var(--line);font-size:12.5px}
+table.dt td:last-child,table.dt th:last-child{text-align:right;font-family:var(--mono)}
+.qcrow{display:flex;gap:22px;flex-wrap:wrap;margin-top:4px}
+.qcrow div{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-600)}
+.qcrow .dot{width:9px;height:9px;border-radius:50%}
+.qcrow b{font-family:var(--mono);color:var(--figure)}
+
+/* ---------------------- pathology training -------------------------- */
+.trainlayout{display:grid;grid-template-columns:1fr 420px;gap:22px;padding:0 0 60px;align-items:start}
+/* the training viewer reuses .viewer/.canvas/.zoomrow from the slide page.
+   Only the bits the slide page adds and this one does not are reset here. */
+#tvCanvas{height:460px}
+
+.quiz{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.qhead{display:flex;align-items:flex-start;gap:16px;padding:18px 20px;border-bottom:1px solid var(--line)}
+.qhead h2{font-size:17px}
+.qhead .qsub{margin:5px 0 0;font-size:12.5px;color:var(--ink-400)}
+.score{margin-left:auto;text-align:right;flex-shrink:0}
+.score .sn{font-size:26px;font-weight:700;letter-spacing:-.03em;color:var(--figure);line-height:1;
+  font-variant-numeric:tabular-nums}
+.score .sl{display:block;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink-400);margin-top:5px}
+.q{padding:18px 20px;border-bottom:1px solid var(--line)}
+.q:last-of-type{border-bottom:0}
+.qn{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--ink-400);
+  display:block;margin-bottom:7px}
+.q h3{font-size:14.5px;line-height:1.45;margin-bottom:12px}
+.opts{display:grid;gap:7px}
+.opt-a{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border:1px solid var(--line);
+  border-radius:7px;font-size:13px;color:var(--ink-600);cursor:pointer;background:var(--surface);
+  text-align:left;width:100%;line-height:1.45}
+.opt-a:hover{border-color:var(--link);color:var(--ink-900)}
+.opt-a .mk{flex-shrink:0;width:17px;height:17px;border:1px solid var(--line);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;
+  font-family:var(--mono);color:var(--ink-400);margin-top:1px}
+.q.checked .opt-a{cursor:default}
+.q.checked .opt-a:hover{border-color:var(--line);color:var(--ink-600)}
+.opt-a.right{border-color:var(--pass-fg);background:var(--pass-bg);color:var(--pass-fg);font-weight:600}
+.opt-a.right .mk{border-color:var(--pass-fg);color:var(--pass-fg)}
+.opt-a.wrong{border-color:var(--fail-600);background:var(--fail-050);color:var(--fail-600);font-weight:600}
+.opt-a.wrong .mk{border-color:var(--fail-600);color:var(--fail-600)}
+.qcheck{margin-top:12px}
+.qcheck .btn[disabled]{opacity:.45;cursor:default;background:var(--surface-2);
+  color:var(--ink-400);border:1px solid var(--line)}
+.why{margin:12px 0 0;padding:11px 13px;border-left:3px solid var(--link);background:var(--surface-2);
+  border-radius:0 6px 6px 0;font-size:12.5px;line-height:1.55;color:var(--ink-600)}
+.why b{color:var(--ink-900)}
+.qfoot{display:flex;align-items:center;gap:14px;padding:16px 20px;background:var(--surface-2);
+  border-top:1px solid var(--line);flex-wrap:wrap}
+.qfoot .note-sm{color:var(--ink-600)}
+
+/* ------------------------- AI analysis stub ------------------------- */
+.stub{background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:34px 36px;margin:26px 0 70px;max-width:760px}
+.stublabel{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--accent-fg);
+  border:1px solid var(--accent-fg);border-radius:3px;padding:2px 8px;margin-bottom:16px}
+.stub h2{font-size:21px;margin-bottom:12px}
+.stub p{margin:0 0 16px;color:var(--ink-600);font-size:14px;max-width:70ch}
+h3.stubh{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-400);
+  margin:26px 0 14px;padding-top:18px;border-top:1px solid var(--line)}
+.stubnote{font-size:12.5px !important;color:var(--ink-400) !important;margin-top:22px !important;
+  padding-top:18px;border-top:1px solid var(--line)}
+.stubacts{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+
+/* ------------------------ data access ------------------------------ */
+.access{display:grid;grid-template-columns:1.15fr .85fr;gap:32px;padding:26px 0 70px;align-items:start}
+.form{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:26px 28px}
+.form h2{font-size:20px;margin-bottom:4px}
+.form .fsub{color:var(--ink-600);font-size:13.5px;margin:0 0 22px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld.full{grid-column:1 / -1}
+.fld label{font-size:12.5px;font-weight:700;color:var(--ink-600)}
+.fld label span{color:var(--accent-fg)}
+.fld input,.fld select,.fld textarea{border:1px solid var(--field-line);border-radius:6px;padding:9px 11px;
+  font-family:inherit;font-size:13.5px;color:var(--ink-900);background:var(--field);width:100%}
+.fld input::placeholder,.fld textarea::placeholder{color:var(--ink-400);opacity:1}
+.fld textarea{min-height:92px;resize:vertical;line-height:1.5}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--link);
+  box-shadow:0 0 0 3px rgba(42,92,150,.13)}
+.fld .hint{font-size:11.5px;color:var(--ink-400)}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink-600);margin-bottom:12px;line-height:1.5}
+.chk input{margin-top:2px;accent-color:var(--control);width:15px;height:15px;flex-shrink:0}
+.formfoot{display:flex;align-items:center;gap:16px;margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
+.formfoot .note-sm{font-size:12px;color:var(--ink-400)}
+.done{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:44px 34px;text-align:center}
+.done .mark{width:52px;height:52px;border-radius:50%;background:var(--surface-3);color:var(--brand-fg);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.done h2{font-size:21px;margin-bottom:8px}
+.done p{color:var(--ink-600);font-size:14px;margin:0 auto 8px;max-width:46ch}
+.done .ref{font-family:var(--mono);font-size:13px;color:var(--brand-fg);background:var(--surface-2);
+  border:1px solid var(--line);border-radius:6px;padding:9px 14px;display:inline-block;margin:14px 0 20px}
+.tiers{display:grid;gap:12px;margin-top:14px}
+.tier{border:1px solid var(--line);border-radius:9px;padding:14px 16px;background:var(--surface)}
+.tier.open{border-left:3px solid var(--s3)}
+.tier.ctrl{border-left:3px solid var(--s4)}
+.tier h4{font-size:14px;margin-bottom:4px}
+.tier p{margin:0;font-size:12.5px;color:var(--ink-600)}
+.terms{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:22px 24px}
+.terms h3{font-size:15px;margin-bottom:10px}
+.terms ol{margin:0;padding-left:20px;font-size:13px;color:var(--ink-600);line-height:1.65}
+.terms li{margin-bottom:7px}
+
+@media(max-width:1240px){
+  .hrow{gap:20px}
+  .aboutgrid{gap:28px}
+}
+@media(max-width:1100px){
+  .trainlayout{grid-template-columns:1fr}
+  .organgrid{grid-template-columns:repeat(3,1fr)}
+  .cardgrid{grid-template-columns:repeat(3,1fr)}
+  .slidelayout{grid-template-columns:1fr}
+  .rail{position:static}
+  .related{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:1100px){
+  .vizgrid > *{grid-column:span 12 !important}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .access{grid-template-columns:1fr}
+  .cols3.four{grid-template-columns:repeat(2,1fr)}
+  .aboutgrid{grid-template-columns:1fr}
+  .viewernote{flex-direction:column;align-items:flex-start;gap:18px}
+}
+@media(max-width:900px){
+  /* a bare 1fr track still resolves to the results table's min-width and
+     blows the page out sideways. minmax(0,...) lets the column shrink and
+     the table scroll inside its own wrapper.                            */
+  .browse{grid-template-columns:minmax(0,1fr)}
+  .organgrid{grid-template-columns:repeat(2,1fr)}
+  .frow{grid-template-columns:1fr}
+  .facets{position:static}
+  .statband .wrap{grid-template-columns:repeat(2,1fr)}
+  .stat{border-right:0;border-bottom:1px solid var(--line)}
+  .cols3{grid-template-columns:1fr}
+  nav.main{gap:0}
+  nav.main a{padding:7px 8px;font-size:12.5px}
+  .wordmark{font-size:21px}
+  .brand .lg-mark{height:50px}
+  .hero h1{font-size:32px}
+  .specrow{grid-template-columns:1fr}
+  .snum{gap:18px}
+}
+
+/* =====================================================================
+   PHONES
+   The layout above was built for a desktop portal and left mobile out of
+   scope. Everything below is the catch-up pass: kill every source of
+   horizontal scroll, let the header and viewer collapse, and turn the
+   filter rail into something a thumb can use.
+   ===================================================================== */
+@media(max-width:760px){
+  .wrap{padding:0 16px}
+
+  /* --- utility strip: stack, drop the secondary links --- */
+  .utility{font-size:11px}
+  .utility .wrap{height:auto;padding:7px 16px;flex-direction:column;align-items:flex-start;gap:3px}
+  .utility .u-right{display:none}
+
+  /* --- header: one flexible row, scrollable nav --- */
+  .hrow{height:auto;padding:10px 0;flex-wrap:wrap;gap:10px 14px}
+  .brand{gap:11px}
+  .brand .lg-mark{height:40px}
+  .wordmark{font-size:18px}
+  .wordmark small{font-size:8px;letter-spacing:.1em;margin-top:3px}
+  .hrow .btn{height:32px;padding:0 12px;font-size:12px}
+  .hactions{gap:8px}
+  .themetoggle{width:30px;height:30px}
+  .navrow .wrap{height:42px;padding:0 16px;overflow-x:auto;scrollbar-width:none}
+  .navrow .wrap::-webkit-scrollbar{display:none}
+  nav.main{flex-wrap:nowrap}
+  nav.main a{white-space:nowrap;font-size:13px;padding:7px 10px}
+  .navrow .relnote{display:none}
+
+  /* --- hero --- */
+  .hero .wrap{padding:38px 16px 34px}
+  .hero h1{font-size:27px}
+  .hero p.lede{font-size:15px}
+  .hero .eyebrow{font-size:10.5px;letter-spacing:.14em}
+  .searchbig{flex-direction:column;gap:6px;padding:8px}
+  .searchbig input{padding:10px 8px;font-size:16px}   /* 16px stops iOS zooming on focus */
+  .searchbig .btn{width:100%}
+  .examples{gap:12px 16px;font-size:12.5px}
+
+  /* --- sections --- */
+  section.band{padding:38px 0}
+  .sec-head{flex-direction:column;align-items:flex-start;gap:14px}
+  .sec-head h2{font-size:22px}
+  .stat{padding:20px 14px}
+  .stat .n{font-size:28px}
+  .kicker{font-size:11px}
+  .cols3{grid-template-columns:1fr !important;gap:16px !important}
+  .feat{padding:18px}
+  .citebox code,.terms code,code.cmd{overflow-wrap:anywhere}
+  section.band.num{padding:36px 0;scroll-margin-top:8px}
+  .snum{flex-wrap:wrap;gap:14px;padding-bottom:16px;margin-bottom:18px}
+  .snum .sn{font-size:28px}
+  .snum h2{font-size:21px}
+  .snum .btn{width:100%}
+  .specrow{grid-template-columns:1fr;gap:14px;margin-top:18px}
+  .spec{padding:18px}
+  .cols3.four{grid-template-columns:1fr}
+  .viewernote{padding:20px 18px}
+  .viewernote .btn{width:100%}
+  .aboutgrid{grid-template-columns:1fr;gap:22px}
+  .callouts{grid-template-columns:repeat(2,1fr)}
+  .contribute{padding:18px}
+  .bypass{padding:16px}
+  .bypass .btn{width:100%}
+  .aboutlogo{padding:20px}
+  .aboutlogo img{height:110px}
+  .secindex{position:static}
+  .secindex .wrap{padding:0 16px}
+  .secindex a{padding:11px 12px;font-size:12px}
+  .gatebar{padding:12px 14px;font-size:13px}
+  .herocta{gap:10px}
+  .herocta .btn{width:100%}
+
+  /* --- footer --- */
+  footer.site{padding:34px 0 22px}
+  footer.site .cols{grid-template-columns:1fr 1fr;gap:24px}
+  footer.site .about{grid-column:1 / -1}
+  footer.site a{overflow-wrap:anywhere}
+  footer .legal{flex-direction:column;gap:8px;font-size:12px}
+
+  /* --- browse --- */
+  .pagehead{padding:16px 0 0}
+  .pagehead h1{font-size:22px}
+  .tabs{overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs button{white-space:nowrap}
+  .browse{padding:16px 0 44px;gap:14px}
+  .facets{display:none}
+  .facets.show{display:block}
+  #fToggle{display:inline-flex}
+  .resbar{padding:11px 12px;gap:9px}
+  .resbar .srch{order:-1;flex:1 1 100%;min-width:0}
+  .resbar .srch input{font-size:16px}
+  .resbar .count{flex:1 1 auto}
+  .resbar .grow{display:none}
+  .resbar #expBtn{display:none}
+  .cardgrid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .scard .dxt{font-size:12px}
+  .scard .mt{font-size:11px}
+  .pager{flex-direction:column;align-items:flex-start;gap:10px}
+
+  /* --- slide detail --- */
+  .slidehead{padding:14px 0}
+  .slidehead h1{font-size:19px}
+  .slidehead .acts{margin-left:0;flex:1 1 100%;gap:7px}
+  .slidehead .acts .btn{flex:1}
+  .slidelayout{padding:14px 0 44px;gap:14px}
+  .viewer .vtop{flex-wrap:wrap;gap:7px;padding:8px 10px}
+  .viewer .vtop .sp{display:none}
+  .vbtn{height:26px;padding:0 8px;font-size:11.5px}
+  .canvas{height:330px;touch-action:pan-y}
+  .navigator{width:86px}
+  .zoomrow{flex-wrap:wrap;gap:7px}
+  .zoomrow input[type=range]{flex:1 1 100%;order:2}
+  .rail .rbody{max-height:none;padding:6px 14px 14px}
+  dl.meta dt{font-size:11.5px;padding-right:10px}
+  dl.meta dd{font-size:12.5px}
+  .related{grid-template-columns:repeat(2,1fr)}
+
+  /* --- analytics --- */
+  .vizbar{padding:11px 12px;gap:9px}
+  .vizbar .scope{margin-left:0;flex:1 1 100%;font-size:12.5px}
+  .vizbar select.ctl{flex:1;min-width:0}
+  .vizgrid{gap:14px;padding-bottom:44px}
+  .card{padding:16px 14px 14px}
+  .kpis{gap:14px}
+  .kpi{padding:14px}
+  .kpi .n{font-size:25px}
+  /* bar charts get illegible when a 680-unit viewBox is squeezed to 350,
+     so they keep their width and scroll sideways inside the card         */
+  .cw{overflow-x:auto;scrollbar-width:thin}
+  svg.viz.wide{min-width:540px}
+  .legend div{flex:1 1 100% !important}
+
+  /* --- data access --- */
+  .trainlayout{grid-template-columns:1fr;gap:16px;padding-bottom:44px}
+  #tvCanvas{height:300px}
+  .qhead{padding:16px}
+  .q{padding:16px}
+  .qfoot{padding:14px 16px}
+  .qfoot .btn{width:100%}
+  .stub{padding:22px 18px;margin:16px 0 44px}
+  .stubacts .btn{width:100%}
+  .access{padding:16px 0 44px;gap:20px}
+  .form{padding:20px 18px}
+  .form h2{font-size:18px}
+  .fld input,.fld select,.fld textarea{font-size:16px}
+  .formfoot{flex-direction:column;align-items:stretch;gap:10px}
+  .formfoot .btn{width:100%}
+  .terms{padding:18px 16px}
+  .done{padding:32px 18px}
+}
+
+@media(max-width:460px){
+  .organgrid{grid-template-columns:1fr}
+  .related{grid-template-columns:repeat(2,1fr)}
+  footer.site .cols{grid-template-columns:1fr}
+  .hero h1{font-size:24px}
+}
+</style>
+
+<!-- ============================ UTILITY BAR ============================ -->
+<div class="utility">
+  <div class="wrap">
+    <span>South Asian histopathology and AI portal. Release 1.0, front-end draft.</span>
+    <span class="u-right">
+      <a href="#docs">Documentation</a>
+      <a href="#s02">About</a>
+      <a href="#contact">Contact</a>
+    </span>
+  </div>
+</div>
+
+<!-- ============================== HEADER ============================== -->
+<header class="site">
+  <div class="wrap hrow">
+    <a class="brand" href="#home">
+      <img class="lg-mark" src="elements/histoveya-mark.png" alt="">
+      <span class="wordmark">Histoveya <span class="ai">AI</span>
+        <small>South Asian Histopathology &amp; AI Portal</small>
+      </span>
+    </a>
+    <div class="hactions">
+      <button type="button" class="themetoggle" id="themeBtn"
+              aria-label="Switch to dark theme" title="Switch to dark theme">
+        <svg class="ic-moon" width="17" height="17" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"
+             aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a7 7 0 0 0 10.7 10.7z"/></svg>
+        <svg class="ic-sun" width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"
+             aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.4v2.3M12 19.3v2.3M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.4 12h2.3M19.3 12h2.3M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+      </button>
+      <a class="btn btn-accent" href="#access">Enter atlas</a>
+    </div>
+  </div>
+  <div class="navrow">
+    <div class="wrap">
+      <nav class="main">
+        <a href="#home" data-nav="home">Home</a>
+        <a href="#browse" data-nav="browse">Browse Slides</a>
+        <a href="#training" data-nav="training">Pathology Training</a>
+        <a href="#aianalysis" data-nav="aianalysis">AI Analysis</a>
+        <a href="#analytics" data-nav="analytics">Cohort Analytics</a>
+        <a href="#docs" data-nav="docs">Docs</a>
+      </nav>
+      <span class="relnote">Release 1.0 &middot; August 2026</span>
+    </div>
+  </div>
+</header>
+
+<!-- Shown once the gate is passed. Nothing was stored, and saying so is the
+     one thing on this page that could otherwise mislead someone.          -->
+<div class="draftbar" id="draftBar" hidden>
+  <div class="wrap">
+    <span><b>Draft interface.</b> No account was created and nothing you typed was saved or
+      sent anywhere. It existed only in this browser tab.</span>
+    <button type="button" id="draftDismiss">Dismiss</button>
+  </div>
+</div>
+
+<!-- =============================== HOME =============================== -->
+<main id="view-home">
+
+  <!-- ------------------------------ 00 ------------------------------- -->
+  <div class="hero" id="s00">
+    <div class="heroshow" id="heroShow" aria-hidden="true">
+      <div class="hs-layer" id="hsA"></div>
+      <div class="hs-layer" id="hsB"></div>
+    </div>
+    <div class="hero-scrim" aria-hidden="true"></div>
+    <div class="wrap">
+      <span class="eyebrow">00 &nbsp;Overview &middot; Release 1.0 &middot; August 2026</span>
+      <h1>A reference atlas for <em>South Asian</em> cancer histopathology.</h1>
+      <p class="lede">An open-access digital pathology atlas of whole-slide cancer images and
+        clinical metadata from South Asia, built to close the gap in global reference
+        imaging. It exists so the diagnostic models the region's pathology services depend
+        on can be trained and tested on tissue from the patients they will be used on.</p>
+
+      <form class="searchbig" id="heroSearch" onsubmit="return false;">
+        <input id="heroQ" type="search" placeholder="Search slide ID, diagnosis, primary site, ICD-O code…" aria-label="Search the atlas">
+        <button class="btn btn-primary" type="submit">Search the atlas</button>
+      </form>
+      <div class="examples">
+        <span>Try:</span>
+        <button data-ex="Invasive ductal carcinoma">Invasive ductal carcinoma</button>
+        <button data-ex="Cervix">Cervix</button>
+        <button data-ex="8500/3">8500/3</button>
+        <button data-ex="HVA-BR">HVA-BR</button>
+      </div>
+      <div class="herocta">
+        <a class="btn btn-accent" href="#browse">Access the atlas</a>
+        <span class="gatenote">Registration required. It takes a minute.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="statband">
+    <div class="wrap">
+      <div class="stat"><div class="n"><span data-count="1000">0</span>+</div>
+        <div class="l">Digital slides</div></div>
+      <div class="stat"><div class="n"><span data-count="800">0</span>+</div>
+        <div class="l">Cases</div></div>
+      <div class="stat"><div class="n"><span data-count="5">0</span>+</div>
+        <div class="l">Cancer types</div></div>
+      <div class="stat"><div class="n"><span data-count="4">0</span>+<span class="u"> TP</span></div>
+        <div class="l">Total pixels imaged</div></div>
+    </div>
+  </div>
+
+  <!-- section index: micro-navigation down the page -->
+  <div class="secindex" id="secIndex">
+    <div class="wrap">
+      <a href="#s00" data-sec="s00"><b>00</b> Overview</a>
+      <a href="#s01" data-sec="s01"><b>01</b> Atlas</a>
+      <a href="#s02" data-sec="s02"><b>02</b> About</a>
+    </div>
+  </div>
+
+  <!-- ------------------------------ 01 ------------------------------- -->
+  <section class="band num" id="s01">
+    <div class="wrap">
+      <div class="snum">
+        <span class="sn">01</span>
+        <div class="st">
+          <h2>The slide atlas</h2>
+          <p>Ten primary sites, scanned at 40&times; and reported to one standard. Filter the
+            cohort, read a case, then export a manifest and pull the images.</p>
+        </div>
+        <a class="btn btn-ghost" href="#browse">Open the repository &rarr;</a>
+      </div>
+
+      <div class="organgrid" id="organGrid"></div>
+
+      <div class="specrow">
+        <div class="spec">
+          <h3>What a slide record carries</h3>
+          <dl class="speclist">
+            <dt>Identity</dt><dd>Slide ID, case ID, sibling slides from the same case</dd>
+            <dt>Diagnosis</dt><dd>Text diagnosis, ICD-O-3 morphology code, grade, stage</dd>
+            <dt>Case</dt><dd>Primary site, sex, age, reporting laboratory, consent status</dd>
+            <dt>Acquisition</dt><dd>Scanner, magnification, microns per pixel, pixel dimensions, file size</dd>
+            <dt>Quality</dt><dd>QC outcome, release date, whether an attention map is published</dd>
+          </dl>
+        </div>
+        <div class="spec">
+          <h3>Getting the images</h3>
+          <p>Filter to the cohort you want, export the manifest as CSV, then pull the slides
+            with the command line client. The manifest is the unit of reproducibility. Keep it
+            with your results and anyone can rebuild the same set.</p>
+          <code class="cmd">pip install histoveya
+histoveya get --manifest manifest.csv --out ./slides</code>
+          <p class="fine">Images and metadata are released under CC&nbsp;BY&nbsp;4.0. Clinical
+            free-text fields are withheld. Re-identification attempts are prohibited under the
+            terms of use.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------ 02 ------------------------------- -->
+  <section class="band alt num" id="s02">
+    <div class="wrap">
+      <div class="snum">
+        <span class="sn">02</span>
+        <div class="st">
+          <h2>Why South Asia needs its own reference atlas</h2>
+          <p>Close to a quarter of the world lives here. Under one percent of the imaging
+            behind public pathology datasets comes from here.</p>
+        </div>
+      </div>
+
+      <div class="aboutgrid">
+        <div>
+          <div class="aboutlogo">
+            <img src="elements/histoveya-logo.png" alt="Histoveya AI">
+          </div>
+          <p class="abouttext">South Asia is close to a quarter of the world's population and
+            under one percent of the imaging data behind public pathology datasets and the
+            diagnostic models built on them. The models are still used on patients here.</p>
+          <p class="abouttext">The gap shows up as weaker accuracy for exactly the patients
+            those models are meant to serve. Staining conventions, case mix and tissue
+            handling all differ from what the models were trained on, so a model that reads
+            a slide well in one country can read the same tumour poorly in another. A
+            reference set from the region is what lets anyone measure that difference
+            instead of assuming it away.</p>
+          <p class="abouttext">Slides are de-identified at source under institutional ethics
+            approval. Nothing here is cleared for clinical or diagnostic use.</p>
+
+          <h3 class="ah">The release</h3>
+          <div class="callouts">
+            <div class="callout"><span class="cn">20x</span><span class="cl">Scan standard</span></div>
+            <div class="callout"><span class="cn">6</span><span class="cl">Primary sites, growing</span></div>
+            <div class="callout"><span class="cn">3</span><span class="cl">Stain workflows</span></div>
+            <div class="callout"><span class="cn">5</span><span class="cl">Countries represented</span></div>
+          </div>
+
+          <h3 class="ah">Release notes</h3>
+          <div class="timeline">
+            <div class="rel latest">
+              <div class="d">2026-08-14</div>
+              <h4>Release 1.0, first public release<span class="tag">CURRENT</span></h4>
+              <p>The founding cohort, with clinical annotation and the v1 metadata schema.
+                Attention maps are published for a subset of cases.</p>
+            </div>
+            <div class="rel">
+              <div class="d">Planned</div>
+              <h4>Release 1.1</h4>
+              <p>Expansion of the cervical and oral cohorts, IHC pairs for receptor and p16
+                status, and attention map coverage for the remaining slides.</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="contribute">
+            <h3>Contribute a case</h3>
+            <p>Pathology departments and biobanks across South Asia are invited to contribute
+              de-identified whole-slide cases and their metadata to the reference database.
+              Cases stay credited to the contributing department.</p>
+            <p>Write to us with your scanner, your usual stains and roughly how many cases you
+              hold, and we will send the transfer and consent paperwork.</p>
+            <p class="todo"><b>TODO</b> Contribution contact address. This block needs a real
+              inbox before anyone can act on it.</p>
+          </div>
+
+          <div class="citebox" style="margin-top:18px">
+            <h3>How to cite</h3>
+            <p style="margin:0 0 12px;font-size:13.5px">Please cite the atlas and the release
+              you worked from. Individual slides carry their own DOI.</p>
+            <code>Histoveya AI (2026).
+Histoveya AI: a South Asian histopathology atlas,
+Release 1.0 [Data set].
+https://doi.org/10.0000/histoveya.atlas.v1.0</code>
+          </div>
+
+          <div class="terms" style="margin-top:18px">
+            <h3>Where the slides come from</h3>
+            <p style="font-size:13px;color:var(--ink-600);margin:0 0 10px">Every slide in
+              Release 1.0 is scanned and reported at one laboratory in Kathmandu, and the
+              laboratory is recorded on each case.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ============================== BROWSE ============================== -->
+<main id="view-browse" class="hide">
+  <div class="pagehead">
+    <div class="wrap">
+      <div class="crumb"><a href="#home">Home</a> &rsaquo; Repository</div>
+      <h1>Browse the slide repository</h1>
+      <p class="sub">Filter the cohort, then export a manifest or open any slide in the viewer.</p>
+      <div class="tabs">
+        <button class="on">Slides</button>
+        <button title="Not in this draft">Cases</button>
+        <button title="Not in this draft">Files</button>
+        <button title="Not in this draft">Saved cohorts</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="browse">
+      <!-- ---------- facet rail ---------- -->
+      <aside class="facets">
+        <div class="fh"><h3>Filters</h3><button id="clearAll">Clear all</button></div>
+        <div id="facetList"></div>
+      </aside>
+
+      <!-- ---------- results ---------- -->
+      <div>
+        <div class="resbar">
+          <button class="btn btn-ghost btn-sm" id="fToggle" aria-expanded="false">Filters</button>
+          <span class="count"><b id="resCount">0</b> slides</span>
+          <span class="muted" id="resSub"></span>
+          <span class="grow"></span>
+          <label class="srch">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7d8894" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            <input id="q" type="search" placeholder="Search slides…" aria-label="Search slides">
+          </label>
+          <select class="ctl" id="sort" aria-label="Sort">
+            <option value="id">Sort: Slide ID</option>
+            <option value="site">Sort: Primary site</option>
+            <option value="age">Sort: Age</option>
+            <option value="size">Sort: File size</option>
+            <option value="date">Sort: Newest release</option>
+          </select>
+          <select class="ctl" id="per" aria-label="Per page">
+            <option>25</option><option>50</option><option>100</option>
+          </select>
+          <div class="toggle">
+            <button id="vTable" class="on">Table</button>
+            <button id="vGrid">Grid</button>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="expBtn">Export manifest</button>
+        </div>
+
+        <div class="chips" id="chips"></div>
+
+        <div class="tblwrap" id="tableWrap">
+          <table class="res">
+            <thead><tr>
+              <th style="width:34px"></th><th>Slide ID</th><th>Preview</th><th>Primary site</th>
+              <th>Diagnosis</th><th>Grade</th><th>Stage</th><th>Sex</th><th>Age</th>
+              <th>Stain</th><th>Mag</th><th>Size</th><th>QC</th>
+            </tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+
+        <div class="cardgrid hide" id="gridWrap"></div>
+
+        <div class="pager">
+          <span class="muted" id="pagerInfo"></span>
+          <div class="pg" id="pagerBtns"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ============================ SLIDE DETAIL ========================== -->
+<main id="view-slide" class="hide">
+  <div class="slidehead">
+    <div class="wrap">
+      <div class="crumb"><a href="#home">Home</a> &rsaquo; <a href="#browse">Repository</a> &rsaquo; <span id="sdCrumb"></span></div>
+      <div class="row">
+        <h1 id="sdId"></h1>
+        <span id="sdQc"></span>
+        <span id="sdFeat"></span>
+        <span class="acts">
+          <button class="btn btn-ghost btn-sm" onclick="alert('Mock only. The citation would be copied to the clipboard.')">Cite</button>
+          <button class="btn btn-ghost btn-sm" onclick="alert('Mock only. This would add the slide to the download cart.')">Add to cart</button>
+          <button class="btn btn-primary btn-sm" onclick="alert('Mock only. No files are served in this draft.')">Download slide</button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="slidelayout">
+      <!-- ---------- viewer ---------- -->
+      <div>
+        <div class="viewer">
+          <div class="vtop">
+            <strong style="color:var(--on-band-3)">Whole-slide viewer</strong>
+            <span id="vtName" class="mono" style="font-size:11.5px"></span>
+            <span class="sp"></span>
+            <button class="vbtn" id="btnHeat">Heat-map</button>
+            <button class="vbtn" id="btnSeg">Segmentation</button>
+            <button class="vbtn" id="btnGrid">Patch grid</button>
+            <button class="vbtn" id="btnReset">Reset</button>
+          </div>
+          <div class="canvas" id="canvas">
+            <div class="stage" id="stage">
+              <img id="slideImg" alt="Whole-slide overview" draggable="false">
+              <div class="heat" id="heatLayer"></div>
+            </div>
+            <div class="navigator" id="nav"><img id="navImg" alt=""><div class="box" id="navBox"></div></div>
+            <div class="scalebar"><i></i><span id="sbTxt">2.0 mm</span></div>
+          </div>
+          <div class="zoomrow">
+            <button class="vbtn" data-z="1">1&times;</button>
+            <button class="vbtn" data-z="4">4&times;</button>
+            <button class="vbtn" data-z="10">10&times;</button>
+            <button class="vbtn" data-z="20">20&times;</button>
+            <button class="vbtn" data-z="40">40&times;</button>
+            <input type="range" id="zoom" min="1" max="40" step="0.5" value="1" aria-label="Zoom">
+            <span class="zv" id="zv">1.0&times;</span>
+          </div>
+        </div>
+
+        <div class="note">
+          <strong>Draft note.</strong> This is a static mock. The production viewer will serve
+          pyramidal DZI tiles through OpenSeadragon. The images here are downsampled
+          segmentation overviews standing in for the full-resolution slides.
+        </div>
+
+      </div>
+
+      <!-- ---------- metadata rail ---------- -->
+      <aside class="rail">
+        <div class="rtabs">
+          <button class="on" data-rt="case">Case</button>
+          <button data-rt="dx">Diagnosis</button>
+          <button data-rt="acq">Acquisition</button>
+        </div>
+        <div class="rbody" id="railBody"></div>
+      </aside>
+
+      <section class="relwrap">
+        <h3 style="font-size:17px;margin:0 0 4px">Other slides from this case</h3>
+        <div class="related" id="related"></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<!-- ============================ ANALYTICS ============================= -->
+<main id="view-analytics" class="hide">
+  <div class="pagehead">
+    <div class="wrap">
+      <div class="crumb"><a href="#home">Home</a> &rsaquo; Analytics</div>
+      <h1>Cohort analytics</h1>
+      <p class="sub">How the release 1.0 cohort is distributed. Every chart reads from the same
+        filtered set, and clicking a mark opens that subset in the repository.</p>
+      <div class="tabs"><button class="on">Overview</button>
+        <button title="Not in this draft">Survival</button>
+        <button title="Not in this draft">Compare cohorts</button></div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="vizbar">
+      <label for="fSite">Primary site</label>
+      <select class="ctl" id="fSite"><option value="">All sites</option></select>
+      <label for="fStain">Stain</label>
+      <select class="ctl" id="fStain"><option value="">All stains</option></select>
+      <button class="btn btn-ghost btn-sm" id="fReset">Reset</button>
+      <span class="scope">In scope: <b id="vizN">0</b> slides across <b id="vizC">0</b> cases</span>
+    </div>
+
+    <div class="vizgrid">
+      <div class="span12 kpis" id="vizKpis"></div>
+
+      <div class="card span5">
+        <div class="ch">
+          <div><h3 id="donutTitle">Slides by primary site</h3>
+               <p class="sub" id="donutSub">Share of the cohort in scope</p></div>
+          <button class="tv" data-tbl="donut">Table</button>
+        </div>
+        <div class="cw" id="donutWrap"></div>
+        <div class="legend" id="donutLegend"></div>
+        <div id="donutTable"></div>
+      </div>
+
+      <div class="card span7">
+        <div class="ch">
+          <div><h3>Most frequent diagnoses</h3>
+               <p class="sub">Top 10 by slide count. Click a bar to open it in the repository.</p></div>
+          <button class="tv" data-tbl="dx">Table</button>
+        </div>
+        <div class="cw" id="dxWrap"></div>
+        <div id="dxTable"></div>
+      </div>
+
+      <div class="card span6">
+        <div class="ch">
+          <div><h3>Age at diagnosis</h3>
+               <p class="sub" id="ageSub">Distribution across the cohort in scope</p></div>
+          <button class="tv" data-tbl="age">Table</button>
+        </div>
+        <div class="cw" id="ageWrap"></div>
+        <div id="ageTable"></div>
+      </div>
+
+      <div class="card span6">
+        <div class="ch">
+          <div><h3>Stage at diagnosis</h3>
+               <p class="sub">AJCC 8th edition, grouped. Darker means later stage.</p></div>
+          <button class="tv" data-tbl="stage">Table</button>
+        </div>
+        <div class="cw" id="stageWrap"></div>
+        <div id="stageTable"></div>
+      </div>
+
+      <div class="card span8">
+        <div class="ch">
+          <div><h3>Stains and special studies</h3>
+               <p class="sub">What was cut for each slide. Click a bar to open it in the repository.</p></div>
+          <button class="tv" data-tbl="stain">Table</button>
+        </div>
+        <div class="cw" id="stainWrap"></div>
+        <div id="stainTable"></div>
+      </div>
+
+      <div class="card span4">
+        <div class="ch"><div><h3>Quality control</h3>
+          <p class="sub">Scan QC outcome for slides in scope</p></div></div>
+        <div class="cw" id="qcWrap"></div>
+        <div class="note" style="margin-top:16px">Slides that fail QC stay listed and stay
+          downloadable. They are flagged, not hidden, so that scan artefacts can be studied
+          rather than silently removed from the denominator.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- =========================== DATA ACCESS ============================ -->
+<main id="view-access" class="hide">
+  <div class="pagehead">
+    <div class="wrap">
+      <div class="crumb"><a href="#home">Home</a> &rsaquo; Register</div>
+      <h1 id="gateTitle">Register for access</h1>
+      <p class="sub" id="gateSub">The landing page is open to anyone. The slide repository, the
+        viewer and the analysis page sit behind this form, so we can report usage back to the
+        laboratory and reach you if a slide is revised or withdrawn.</p>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="gatebar" id="gateBar" hidden>
+      <b>You need an account to open that page.</b>
+      <span id="gateWhere">Fill this in and you will land on the repository.</span>
+    </div>
+
+    <div class="access">
+      <div id="accessPane">
+        <form class="form" id="regForm" novalidate>
+          <h2>Create an account</h2>
+          <p class="fsub">Fields marked <span style="color:var(--accent-fg)">*</span> are required.</p>
+
+          <div class="frow">
+            <div class="fld full"><label for="rName">Full name <span>*</span></label>
+              <input id="rName" name="name" type="text" autocomplete="name" required></div>
+
+            <div class="fld full"><label for="rInst">Institution <span>*</span></label>
+              <input id="rInst" name="institution" type="text" autocomplete="organization" required
+                     placeholder="University, hospital, laboratory or company"></div>
+
+            <div class="fld full"><label for="rEmail">Institutional email <span>*</span></label>
+              <input id="rEmail" name="email" type="email" autocomplete="email" required
+                     placeholder="you@university.edu">
+              <span class="hint">Please use an institutional address. Personal mailboxes
+                (gmail, outlook, yahoo and similar) are not accepted.</span></div>
+
+            <div class="fld full"><label for="rUse">Reason for access <span>*</span></label>
+              <textarea id="rUse" name="use" required
+                placeholder="A sentence or two on what you plan to do with the slides. Read by the atlas team, and reported back to the laboratory in aggregate."></textarea></div>
+
+            <div class="fld"><label for="rRole">Role</label>
+              <select id="rRole" name="role">
+                <option value="">Select a role</option>
+                <option>Pathologist</option><option>Clinician</option>
+                <option>Research scientist</option><option>Postdoctoral researcher</option>
+                <option>PhD or master's student</option><option>Data scientist or engineer</option>
+                <option>Industry researcher</option><option>Other</option>
+              </select></div>
+            <div class="fld"><label for="rCountry">Country</label>
+              <input id="rCountry" name="country" type="text" autocomplete="country-name"></div>
+
+            <div class="fld full"><label for="rOrcid">ORCID iD</label>
+              <input id="rOrcid" name="orcid" type="text" placeholder="0000-0000-0000-0000">
+              <span class="hint">Optional. Lets us link publications back to the atlas automatically.</span></div>
+          </div>
+
+          <label class="chk"><input type="checkbox" id="rT1" required>
+            <span>I accept the data use agreement, and I will cite the atlas and the release
+              I worked from in any resulting publication.</span></label>
+          <label class="chk"><input type="checkbox" id="rT2" required>
+            <span>I will not attempt to re-identify any individual represented in the data,
+              and I will not redistribute the images under a more restrictive licence.</span></label>
+          <label class="chk"><input type="checkbox" id="rT3">
+            <span>Email me when a new release is published. Roughly twice a year.</span></label>
+
+          <div class="formfoot">
+            <button class="btn btn-accent" type="submit" id="regSubmit">Register and open the atlas</button>
+            <span class="note-sm">Draft interface. Submitting stores nothing and creates no account.</span>
+          </div>
+        </form>
+
+        <!-- DRAFT ONLY. Delete this whole .bypass block and its handler in the
+             script (search: DRAFT BYPASS) when the form goes live.            -->
+        <div class="bypass">
+          <span class="bl">Draft build</span>
+          <p>Skip the form and go straight through, for clicking around the interface.
+            This does not exist in the real site.</p>
+          <button type="button" class="btn btn-ghost" id="skipGate">Skip for now (draft)</button>
+        </div>
+      </div>
+
+      <aside>
+        <div class="terms">
+          <h3>What registration opens</h3>
+          <div class="tiers">
+            <div class="tier open">
+              <h4>Public, no account</h4>
+              <p>This landing page. Cohort size, what the release contains, the metadata schema
+                and the citation.</p>
+            </div>
+            <div class="tier ctrl">
+              <h4>Registered</h4>
+              <p>The slide repository and its filters, the viewer with attention maps and
+                overlays, the cohort analysis page, and CSV manifest export for bulk download.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="terms" style="margin-top:18px">
+          <h3>Data use agreement, in short</h3>
+          <ol>
+            <li>Cite the atlas and the release you used. Slide DOIs are in the metadata.</li>
+            <li>Do not attempt to re-identify patients or reporting pathologists.</li>
+            <li>Do not redistribute under a more restrictive licence than CC BY 4.0.</li>
+            <li>Report suspected mislabelling to
+                <span class="todo-inline">TODO: contact address</span> so the correction
+                reaches everyone.</li>
+            <li>Nothing here is cleared for clinical or diagnostic use.</li>
+          </ol>
+        </div>
+
+        <div class="terms" style="margin-top:18px">
+          <h3>Bulk download</h3>
+          <p style="font-size:13px;color:var(--ink-600);margin:0 0 10px">Export a manifest from
+            the repository, then pull it with the command line client.</p>
+          <code class="cmd">pip install histoveya
+histoveya get --manifest manifest.csv --out ./slides</code>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<!-- ========================= PATHOLOGY TRAINING ======================== -->
+<main id="view-training" class="hide">
+  <div class="pagehead">
+    <div class="wrap">
+      <div class="crumb"><a href="#home">Home</a> &rsaquo; Pathology training</div>
+      <h1>Pathology training</h1>
+      <p class="sub">Read a case, answer the questions, check your score. Built as a teaching
+        loop on top of the same slide set the atlas serves.</p>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <!-- TODO: this notice comes down when a pathologist-authored question set
+         replaces the placeholder in QUIZ (see the script). Until then it stays
+         visible on every load. Do not soften it.                            -->
+    <div class="gatebar" style="margin-bottom:22px">
+      <b>Placeholder content.</b>
+      <span>The case and the questions below are a demonstration of the module, not teaching
+        material. No pathologist has read this image, and the questions are general points
+        about stain reading rather than anything about the case on screen. Both are waiting
+        on pathologist-authored content.</span>
+    </div>
+
+    <div class="trainlayout">
+      <div>
+        <div class="viewer">
+          <div class="vtop">
+            <strong style="color:var(--on-band-3)">Demonstration image</strong>
+            <span class="mono" style="font-size:11.5px">segmentation overview, not a diagnostic field</span>
+            <span class="sp"></span>
+            <button class="vbtn" id="tvReset">Reset</button>
+          </div>
+          <div class="canvas" id="tvCanvas">
+            <div class="stage" id="tvStage">
+              <img id="tvImg" alt="Slide overview used for the training demonstration" draggable="false">
+            </div>
+          </div>
+          <div class="zoomrow">
+            <button class="vbtn" data-tz="1">1&times;</button>
+            <button class="vbtn" data-tz="2">2&times;</button>
+            <button class="vbtn" data-tz="4">4&times;</button>
+            <button class="vbtn" data-tz="8">8&times;</button>
+            <input type="range" id="tvZoom" min="1" max="8" step="0.5" value="1" aria-label="Zoom the demonstration image">
+            <span class="zv" id="tvZv">1.0&times;</span>
+          </div>
+        </div>
+
+        <div class="note" style="margin-top:14px">
+          <strong>What this image is.</strong> A downsampled tissue-segmentation overview from
+          the mock set: green marks detected tissue, blue marks holes. It shows where tissue
+          sits on the slide, not cells. Morphology cannot be read from it at any zoom, which
+          is why none of the questions ask you to.
+        </div>
+      </div>
+
+      <aside>
+        <div class="quiz" id="quiz">
+          <div class="qhead">
+            <div>
+              <h2>Stain reading</h2>
+              <p class="qsub">Four general questions. They hold for any H&amp;E or IHC slide.</p>
+            </div>
+            <div class="score"><span class="sn" id="qScore">0</span><span class="sl">of <b id="qTotal">4</b></span></div>
+          </div>
+          <div id="qList"></div>
+          <div class="qfoot">
+            <button class="btn btn-ghost btn-sm" id="qReset">Start again</button>
+            <span class="note-sm" id="qDone"></span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<!-- ============================ AI ANALYSIS =========================== -->
+<main id="view-aianalysis" class="hide">
+  <div class="pagehead">
+    <div class="wrap">
+      <div class="crumb"><a href="#home">Home</a> &rsaquo; AI analysis</div>
+      <h1>AI analysis</h1>
+      <p class="sub">Run a trained model over a reference case and read what it returns.</p>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="stub">
+      <span class="stublabel">In development</span>
+      <h2>The module is not built yet.</h2>
+      <p>When it is, you will pick a reference case from the atlas, run a model over it, and
+        get back three things: a classification, an estimate of how confident the model is in
+        it, and a suggested IHC panel to follow up with. The attention map behind the
+        classification will open in the viewer alongside it, so the output can be checked
+        against the slide rather than taken on trust.</p>
+
+      <h3 class="stubh">What it will return</h3>
+      <dl class="speclist">
+        <dt>Classification</dt><dd>The model's call, with the label set it was trained on</dd>
+        <dt>Confidence</dt><dd>How sure the model is, and on what basis</dd>
+        <dt>Suggested panel</dt><dd>IHC stains that would confirm or rule out the call</dd>
+      </dl>
+
+      <p class="stubnote">There is deliberately no sample output on this page. A fabricated
+        classification or a made-up confidence figure would be taken for a real one, and this
+        is the part of the site where that would matter most.</p>
+
+      <div class="stubacts">
+        <a class="btn btn-primary" href="#browse">Browse the repository</a>
+        <a class="btn btn-ghost" href="#training">Pathology training</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- =========================== PLACEHOLDER ============================ -->
+<main id="view-todo" class="hide">
+  <div class="wrap" style="padding:90px 24px 120px;text-align:center;max-width:640px">
+    <div class="kicker">Not built yet</div>
+    <h1 style="font-size:30px" id="todoTitle">Coming in the next draft</h1>
+    <p style="color:var(--ink-600);margin:14px 0 26px" id="todoBody"></p>
+    <a class="btn btn-primary" href="#browse">Browse the repository instead</a>
+  </div>
+</main>
+
+<!-- ============================== FOOTER ============================== -->
+<footer class="site">
+  <div class="wrap">
+    <div class="cols">
+      <div class="about">
+        <h5 style="text-transform:none;letter-spacing:-.02em;font-size:16px">Histoveya AI</h5>
+        <p>A South Asian histopathology atlas and the attention models trained on it.
+           Whole-slide images with harmonised diagnoses, released under CC&nbsp;BY&nbsp;4.0.</p>
+        <p class="mono" style="font-size:12px">Kathmandu, Nepal &middot;
+           <span class="todo-inline">TODO: contact address</span></p>
+      </div>
+      <div>
+        <h5>Data</h5>
+        <a href="#browse">Browse slides</a><a href="#analytics">Cohort analysis</a>
+        <a href="#access">Register for access</a><a href="#s02">Release notes</a>
+      </div>
+      <div>
+        <h5>Documentation</h5>
+        <a href="#docs">Metadata schema</a><a href="#docs">API reference</a>
+        <a href="#docs">Download client</a><a href="#docs">FAQ</a>
+      </div>
+      <div>
+        <h5>About</h5>
+        <a href="#s02">The atlas</a><a href="#s02">Contribute a case</a>
+        <a href="#s02">Ethics &amp; consent</a><a href="#docs">Publications</a>
+      </div>
+    </div>
+    <div class="legal">
+      <span>&copy; 2026 Histoveya AI. Data released under CC BY 4.0.</span>
+      <span>Front-end draft &middot; mock data, not for clinical use.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ===================================================================
+   Histoveya AI, front-end draft.
+   All data below is SYNTHETIC. Images are CLAM segmentation overviews
+   placed in mock_slides/ (see web_app.md).
+   =================================================================== */
+
+/* ---- image manifest (regenerated by the snippet in web_app.md) ---- */
+const IMGS = /*IMGS*/["TCGA-A2-A0CP-01Z-00-DX1.jpg", "TCGA-A2-A0CS-01Z-00-DX1.jpg", "TCGA-A2-A0EU-01Z-00-DX1.jpg", "TCGA-A2-A0T1-01Z-00-DX1.jpg", "TCGA-A7-A13H-01Z-00-DX2.jpg", "TCGA-A8-A086-01Z-00-DX1.jpg", "TCGA-A8-A09N-01Z-00-DX1.jpg", "TCGA-AC-A3EH-01Z-00-DX1.jpg", "TCGA-AC-A3QP-01Z-00-DX1.jpg", "TCGA-AC-A3QQ-01Z-00-DX1.jpg", "TCGA-AN-A0AJ-01Z-00-DX1.jpg", "TCGA-AN-A0FW-01Z-00-DX1.jpg", "TCGA-B6-A0I1-01Z-00-DX1.jpg", "TCGA-B6-A0I2-01Z-00-DX1.jpg", "TCGA-BH-A0C7-01Z-00-DX1.jpg", "TCGA-BH-A0DS-01Z-00-DX1.jpg", "TCGA-BH-A0HP-01Z-00-DX1.jpg", "TCGA-BH-A18F-01Z-00-DX1.jpg", "TCGA-BH-A1FR-01Z-00-DX1.jpg", "TCGA-BH-A42U-01Z-00-DX1.jpg", "TCGA-C8-A12O-01Z-00-DX1.jpg", "TCGA-C8-A26W-01Z-00-DX1.jpg", "TCGA-D8-A145-01Z-00-DX1.jpg", "TCGA-D8-A1X7-01Z-00-DX2.jpg", "TCGA-D8-A1XM-01Z-00-DX1.jpg", "TCGA-D8-A73U-01Z-00-DX2.jpg", "TCGA-E2-A1B6-01Z-00-DX1.jpg", "TCGA-E9-A1RA-01Z-00-DX1.jpg", "TCGA-E9-A227-01Z-00-DX1.jpg", "TCGA-E9-A249-01Z-00-DX1.jpg", "TCGA-E9-A2JS-01Z-00-DX1.jpg", "TCGA-EW-A1OZ-01Z-00-DX1.jpg", "TCGA-EW-A1PA-01Z-00-DX1.jpg", "TCGA-EW-A1PF-01Z-00-DX1.jpg", "TCGA-LL-A50Y-01Z-00-DX1.jpg", "TCGA-MS-A51U-01Z-00-DX1.jpg", "TCGA-OK-A5Q2-01Z-00-DX3.jpg", "TCGA-S3-AA15-01Z-00-DX2.jpg"]/*ENDIMGS*/;
+
+/* ------------------------- seeded RNG ------------------------------ */
+function rngFrom(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;
+  let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;
+  return((t^t>>>14)>>>0)/4294967296;};}
+const R = rngFrom(20260826);
+const pick = arr => arr[Math.floor(R()*arr.length)];
+const between = (a,b) => a + Math.floor(R()*(b-a+1));
+
+/* --------------------------- taxonomy ------------------------------ */
+const SITES = [
+ {name:"Breast",      code:"BR", n:268, dx:[
+   ["Invasive ductal carcinoma, NST","8500/3"],["Invasive lobular carcinoma","8520/3"],
+   ["Ductal carcinoma in situ, high grade","8500/2"],["Mucinous carcinoma","8480/3"],
+   ["Metaplastic carcinoma","8575/3"],["Fibroadenoma","9010/0"]]},
+ {name:"Cervix",      code:"CX", n:214, dx:[
+   ["Squamous cell carcinoma, keratinizing","8071/3"],["Squamous cell carcinoma, non-keratinizing","8072/3"],
+   ["Endocervical adenocarcinoma, usual type","8140/3"],["High-grade squamous intraepithelial lesion","8077/2"],
+   ["Adenosquamous carcinoma","8560/3"]]},
+ {name:"Oral cavity", code:"OC", n:132, dx:[
+   ["Squamous cell carcinoma, well differentiated","8070/3"],["Squamous cell carcinoma, moderately differentiated","8070/3"],
+   ["Squamous cell carcinoma, poorly differentiated","8070/3"],["Verrucous carcinoma","8051/3"],
+   ["Oral epithelial dysplasia, severe","8077/2"]]},
+ {name:"Lung",        code:"LU", n:118, dx:[
+   ["Adenocarcinoma, acinar predominant","8140/3"],["Squamous cell carcinoma","8070/3"],
+   ["Small cell carcinoma","8041/3"],["Large cell neuroendocrine carcinoma","8013/3"]]},
+ {name:"Stomach",     code:"ST", n:96,  dx:[
+   ["Adenocarcinoma, intestinal type","8144/3"],["Adenocarcinoma, diffuse type","8145/3"],
+   ["Signet-ring cell carcinoma","8490/3"],["Chronic gastritis with intestinal metaplasia","n/a"]]},
+ {name:"Colorectum",  code:"CR", n:84,  dx:[
+   ["Adenocarcinoma, NOS","8140/3"],["Mucinous adenocarcinoma","8480/3"],
+   ["Tubulovillous adenoma with high-grade dysplasia","8263/0"]]},
+ {name:"Ovary",       code:"OV", n:62,  dx:[
+   ["High-grade serous carcinoma","8461/3"],["Endometrioid carcinoma","8380/3"],
+   ["Mucinous cystadenocarcinoma","8470/3"],["Clear cell carcinoma","8310/3"]]},
+ {name:"Thyroid",     code:"TH", n:54,  dx:[
+   ["Papillary thyroid carcinoma, classic","8260/3"],["Papillary carcinoma, follicular variant","8340/3"],
+   ["Follicular carcinoma","8330/3"],["Medullary carcinoma","8345/3"]]},
+ {name:"Liver",       code:"LI", n:41,  dx:[
+   ["Hepatocellular carcinoma","8170/3"],["Intrahepatic cholangiocarcinoma","8160/3"]]},
+ {name:"Lymph node",  code:"LN", n:38,  dx:[
+   ["Diffuse large B-cell lymphoma","9680/3"],["Classic Hodgkin lymphoma","9650/3"],
+   ["Follicular lymphoma, grade 2","9690/3"],["Metastatic carcinoma","8010/6"]]}
+];
+/* Every slide in the cohort is scanned and reported at one laboratory.
+   Do not reintroduce a list of referring hospitals: naming institutions
+   that did not contribute would be a false claim about provenance.     */
+/* TODO: the reporting laboratory has no name yet. Deliberately a visible
+   placeholder: it shows on every Case tab and in the CSV manifest, so it
+   cannot be demoed past by accident. Replace the string, nothing else.   */
+const LAB = "TODO: name the reporting laboratory";
+const SCANNERS = ["Leica Aperio GT450","Leica Aperio AT2","Hamamatsu NanoZoomer S360","3DHISTECH Pannoramic 1000"];
+const STAINS   = ["H&E","H&E","H&E","H&E","IHC: ER","IHC: PR","IHC: HER2","IHC: Ki-67","IHC: p16","Special: PAS"];
+const GRADES   = ["G1","G2","G2","G3","GX"];
+const STAGES   = ["I","I","I","I","IIA","IIA","IIA","IIB","IIB","IIIA","IIIA","IIIB","IIIC","IV","IV"];
+const QC       = Array(22).fill("Passed").concat(["Under review","Under review","Failed"]);
+const RELEASES = ["2026-08-14"];
+
+/* --------------------------- cohort -------------------------------- */
+const SLIDES = [];
+let caseSerial = 1;
+SITES.forEach(site=>{
+  let n = 0;
+  while(n < site.n){
+    const perCase = R() < .22 ? 2 + (R()<.3?1:0) : 1;   // some cases have sibling slides
+    const cid = "HVA-CASE-" + String(caseSerial++).padStart(4,"0");
+    const [dx, icd] = site.dx[Math.floor(Math.pow(R(), 1.9) * site.dx.length)];
+    const sex = site.code==="CX"||site.code==="OV" ? "Female"
+              : site.code==="BR" ? (R()<.985?"Female":"Male")
+              : (R()<.55?"Male":"Female");
+    const age = Math.round((between(24,84) + between(40,80)) / 2);   // skewed older, as cancer cohorts are
+    const grade = icd.endsWith("/0") ? "n/a" : pick(GRADES);
+    const stage = icd.endsWith("/0")||icd.endsWith("/2") ? "Not staged" : pick(STAGES);
+
+    for(let k=0;k<perCase && n<site.n;k++,n++){
+      const idx = SLIDES.length;
+      const w = between(60000,112000), h = between(48000,92000);
+      SLIDES.push({
+        slideId: "HVA-"+site.code+"-"+String(n+1).padStart(4,"0"),
+        caseId: cid, site: site.name, siteCode: site.code,
+        dx, icd, grade, stage, sex, age, lab: LAB,
+        stain: k===0 ? "H&E" : pick(STAINS),
+        scanner: pick(SCANNERS),
+        mag: null, mpp: 0,        // set just below, so the two always agree
+        w, h,
+        sizeMb: Math.round(w*h/4.1e6*(R()*0.5+0.85)),
+        qc: pick(QC),
+        released: pick(RELEASES),
+        heat: R()<.46, _m: R()<.82,
+        img: IMGS.length ? IMGS[idx % IMGS.length] : null
+      });
+    }
+  }
+});
+SLIDES.forEach(s => {              // 40x scans are 0.2528 MPP, 20x are 0.5011
+  s.mag = s._m ? "40x" : "20x";
+  s.mpp = s._m ? 0.2528 : 0.5011;
+  delete s._m;
+});
+const CASES = new Set(SLIDES.map(s=>s.caseId)).size;
+
+/* ------------------------- facet config ---------------------------- */
+const FACETS = [
+  {key:"site",   label:"Primary site",  open:true},
+  {key:"dx",     label:"Diagnosis",     open:true},
+  {key:"grade",  label:"Histological grade"},
+  {key:"stage",  label:"Stage"},
+  {key:"sex",    label:"Sex"},
+  {key:"ageBand",label:"Age group"},
+  {key:"stain",  label:"Stain"},
+  {key:"mag",    label:"Magnification"},
+  {key:"scanner",label:"Scanner"},
+  {key:"qc",     label:"QC status"}
+];
+const ageBand = a => a<40?"< 40":a<50?"40–49":a<60?"50–59":a<70?"60–69":"70+";
+const valOf = (s,k) => k==="ageBand" ? ageBand(s.age) : s[k];
+const active = {};                       // key -> Set of selected values
+
+/* ------------------------- filtering ------------------------------- */
+let query="", sortKey="id", page=1, perPage=25, mode="table";
+
+function matches(s, skipKey){
+  if(query){
+    const hay = (s.slideId+" "+s.caseId+" "+s.site+" "+s.dx+" "+s.icd+" "+s.stain).toLowerCase();
+    if(!hay.includes(query.toLowerCase())) return false;
+  }
+  for(const k in active){
+    if(k===skipKey) continue;
+    if(active[k].size && !active[k].has(valOf(s,k))) return false;
+  }
+  return true;
+}
+const filtered = () => SLIDES.filter(s=>matches(s));
+
+function counts(key){
+  const m = new Map();
+  SLIDES.forEach(s=>{ if(matches(s,key)){ const v=valOf(s,key); m.set(v,(m.get(v)||0)+1); }});
+  return [...m.entries()].sort((a,b)=>b[1]-a[1]);
+}
+
+/* -------------------------- rendering ------------------------------ */
+const $ = id => document.getElementById(id);
+const esc = t => String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const qcClass = q => q==="Passed"?"b-pass":q==="Under review"?"b-rev":"b-fail";
+const thumbOf = s => s.img ? "mock_slides/thumbs/"+s.img : "";
+
+function renderFacets(){
+  $("facetList").innerHTML = FACETS.map(f=>{
+    const rows = counts(f.key).slice(0,40).map(([v,c])=>{
+      const on = active[f.key] && active[f.key].has(v);
+      return `<label class="opt"><input type="checkbox" data-fk="${f.key}" value="${esc(v)}" ${on?"checked":""}>
+              <span>${esc(v)}</span><span class="cnt">${c.toLocaleString()}</span></label>`;
+    }).join("");
+    const sel = active[f.key] && active[f.key].size ? ` <span class="cnt">${active[f.key].size}</span>` : "";
+    const open = f.open && window.innerWidth > 760;   // collapsed in the mobile drawer
+    return `<details class="facet"${open?" open":""}><summary>${f.label}${sel}</summary>
+            <div class="opts">${rows||'<div class="muted" style="padding:6px 0">No matches</div>'}</div></details>`;
+  }).join("");
+}
+
+function renderChips(){
+  const out=[];
+  for(const k in active) active[k].forEach(v=>{
+    const lbl = (FACETS.find(f=>f.key===k)||{}).label;
+    out.push(`<span class="chip">${lbl}: ${esc(v)}<button data-ck="${k}" data-cv="${esc(v)}" aria-label="Remove filter">&times;</button></span>`);
+  });
+  if(query) out.push(`<span class="chip">Search: ${esc(query)}<button data-ck="__q" aria-label="Clear search">&times;</button></span>`);
+  $("chips").innerHTML = out.join("");
+}
+
+function sortRows(rows){
+  const c = {
+    id:  (a,b)=>a.slideId.localeCompare(b.slideId),
+    site:(a,b)=>a.site.localeCompare(b.site)||a.slideId.localeCompare(b.slideId),
+    age: (a,b)=>a.age-b.age,
+    size:(a,b)=>b.sizeMb-a.sizeMb,
+    date:(a,b)=>b.released.localeCompare(a.released)
+  }[sortKey];
+  return rows.slice().sort(c);
+}
+
+function renderResults(){
+  const all = sortRows(filtered());
+  const pages = Math.max(1, Math.ceil(all.length/perPage));
+  page = Math.min(page, pages);
+  const slice = all.slice((page-1)*perPage, page*perPage);
+
+  $("resCount").textContent = all.length.toLocaleString();
+  $("resSub").textContent = all.length===SLIDES.length ? "(full cohort)" : `of ${SLIDES.length.toLocaleString()} total`;
+
+  $("rows").innerHTML = slice.map(s=>`
+    <tr data-id="${s.slideId}">
+      <td><input type="checkbox" onclick="event.stopPropagation()"></td>
+      <td class="id"><a href="#slide/${s.slideId}">${s.slideId}</a></td>
+      <td><div class="thumb"><img src="${thumbOf(s)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover"></div></td>
+      <td>${s.site}</td>
+      <td class="dx">${esc(s.dx)}<div class="muted mono" style="font-size:11px">${s.icd}</div></td>
+      <td>${s.grade}</td><td>${s.stage}</td><td>${s.sex}</td><td>${s.age}</td>
+      <td>${esc(s.stain)}</td><td>${s.mag}</td><td>${s.sizeMb.toLocaleString()} MB</td>
+      <td><span class="badge ${qcClass(s.qc)}">${s.qc}</span></td>
+    </tr>`).join("");
+
+  $("gridWrap").innerHTML = slice.map(s=>`
+    <div class="scard" data-id="${s.slideId}">
+      <div class="im"><img src="${thumbOf(s)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover">
+        <span class="badge ${qcClass(s.qc)} qc">${s.qc}</span></div>
+      <div class="bd">
+        <div class="sid">${s.slideId}</div>
+        <div class="dxt">${esc(s.dx)}</div>
+        <div class="mt">${s.site} &middot; ${s.grade} &middot; ${s.sex} ${s.age} &middot; ${esc(s.stain)}</div>
+      </div>
+    </div>`).join("");
+
+  $("pagerInfo").textContent = all.length
+    ? `Showing ${((page-1)*perPage+1).toLocaleString()}–${Math.min(page*perPage,all.length).toLocaleString()} of ${all.length.toLocaleString()}`
+    : "No slides match these filters.";
+
+  const btns=[];
+  const add=(l,p,on,dis)=>btns.push(`<button data-p="${p}" ${on?'class="on"':""} ${dis?"disabled":""}>${l}</button>`);
+  add("&lsaquo;", Math.max(1,page-1), false, page===1);
+  const win=[...new Set([1,2,page-1,page,page+1,pages-1,pages])].filter(p=>p>=1&&p<=pages).sort((a,b)=>a-b);
+  let last=0; win.forEach(p=>{ if(p-last>1) btns.push('<button disabled>…</button>'); add(p,p,p===page); last=p; });
+  add("&rsaquo;", Math.min(pages,page+1), false, page===pages);
+  $("pagerBtns").innerHTML = btns.join("");
+  renderChips(); renderFacets();
+}
+
+/* --------------------------- home page ----------------------------- */
+function renderHome(){
+  const max = Math.max(...SITES.map(s=>s.n));
+  $("organGrid").innerHTML = SITES.map(site=>{
+    const mine = SLIDES.filter(x=>x.site===site.name);
+    const topDx = tally(mine, x=>x.dx)[0];
+    const share = (site.n/SLIDES.length*100).toFixed(1);
+    return `<a class="organ" href="#browse" data-site="${site.name}">
+      <div class="o-top"><span class="o-name">${site.name}</span>
+        <span class="o-n">${site.n.toLocaleString()}</span></div>
+      <div class="o-track"><i style="width:${Math.round(site.n/max*100)}%"></i></div>
+      <div class="o-share">${share}% of cohort</div>
+      <div class="o-dx">${topDx ? "Commonest: " + esc(topDx[0]) : ""}</div>
+    </a>`;
+  }).join("");
+}
+</script>
+<script>
+/* ========================= SLIDE DETAIL ============================= */
+let cur = null, z = 1, panX = 0, panY = 0, fitW = 0, fitH = 0, dragging = false, lx = 0, ly = 0;
+
+function railHTML(s, tab){
+  const dl = rows => `<dl class="meta">${rows.map(([k,v,m])=>
+      `<dt>${k}</dt><dd class="${m?"m":""}">${v}</dd>`).join("")}</dl>`;
+  if(tab==="case") return dl([
+    ["Case ID", s.caseId, 1],["Patient sex", s.sex],["Age at diagnosis", s.age+" y"],
+    ["Population", "South Asian (Nepali)"],["Laboratory", s.lab],
+    ["Consent", "Broad research consent"],["Ethics approval", "NHRC-2025-114", 1],
+    ["Vital status", "Not disclosed"],["Data release", s.released + " (v1.0)", 1]
+  ]) + `<div class="note">Clinical free-text and identifiers are withheld from the public release.</div>`;
+  if(tab==="dx") return dl([
+    ["Diagnosis", s.dx],["ICD-O-3 morphology", s.icd, 1],["Primary site", s.site],
+    ["Histological grade", s.grade],["Stage (AJCC 8th)", s.stage],
+    ["Lymphovascular invasion", s.grade==="G3" ? "Present" : "Not identified"],
+    ["Margins", "Uninvolved"],["Reviewed by", "2 pathologists"],
+    ["Concordance", "Full agreement"]
+  ]) + `<div class="note">Diagnoses are harmonised to the WHO Classification of Tumours, 5th edition.</div>`;
+  return dl([
+    ["Scanner", s.scanner],["Objective", s.mag],["Microns per pixel", s.mpp.toFixed(4), 1],
+    ["Dimensions", s.w.toLocaleString()+" × "+s.h.toLocaleString()+" px", 1],
+    ["Levels", "4"],["Format", "Aperio SVS (JPEG2000)", 1],
+    ["File size", s.sizeMb.toLocaleString()+" MB"],["Stain", s.stain],
+    ["QC status", `<span class="badge ${qcClass(s.qc)}">${s.qc}</span>`],
+    ["Attention heat-map", s.heat ? "Available" : "Not published"]
+  ]) + `<div class="note">The slide image is the deliverable. Patch coordinates and
+    feature vectors are not part of this release.</div>`;
+  return "";
+}
+
+function openSlide(id){
+  const s = SLIDES.find(x=>x.slideId===id) || SLIDES[0];
+  cur = s;
+  $("sdId").textContent = s.slideId;
+  $("sdCrumb").textContent = s.slideId;
+  $("sdQc").innerHTML = `<span class="badge ${qcClass(s.qc)}">QC ${s.qc.toLowerCase()}</span>`;
+  $("sdFeat").innerHTML = s.heat ? '<span class="badge b-feat">Attention heat-map available</span>' : "";
+  $("vtName").textContent = s.slideId + "  ·  " + s.mag + "  ·  " + s.mpp.toFixed(4) + " MPP";
+  const src = s.img ? "mock_slides/preview/"+s.img : "";
+  $("slideImg").src = src; $("navImg").src = src;
+  buildHeat(s);
+  setTab("case");
+  const sibs = SLIDES.filter(x=>x.caseId===s.caseId && x.slideId!==s.slideId).slice(0,5);
+  const pool = sibs.length ? sibs : SLIDES.filter(x=>x.site===s.site && x!==s).slice(0,5);
+  $("related").innerHTML = pool.map(x=>`
+    <div class="scard" data-id="${x.slideId}">
+      <div class="im"><img src="${thumbOf(x)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover"></div>
+      <div class="bd"><div class="sid">${x.slideId}</div><div class="mt">${esc(x.stain)} &middot; ${x.mag}</div></div>
+    </div>`).join("") || '<p class="muted">No other slides from this case.</p>';
+  z=1; panX=0; panY=0; $("zoom").value=1; fitImage();
+}
+
+function setTab(t){
+  document.querySelectorAll(".rtabs button").forEach(b=>b.classList.toggle("on", b.dataset.rt===t));
+  $("railBody").innerHTML = railHTML(cur, t);
+}
+
+function buildHeat(s){
+  const rr = rngFrom(s.slideId.split("").reduce((a,c)=>a+c.charCodeAt(0),7));
+  const blobs=[];
+  for(let i=0;i<14;i++){
+    const x=(rr()*80+10).toFixed(1), y=(rr()*80+10).toFixed(1), r=(rr()*16+7).toFixed(1);
+    const hot=rr();
+    const col = hot>.66 ? "rgba(214,0,0,.95)" : hot>.35 ? "rgba(255,150,0,.9)" : "rgba(40,90,220,.8)";
+    blobs.push(`radial-gradient(ellipse ${r}% ${r}% at ${x}% ${y}%, ${col} 0%, rgba(255,255,255,0) 72%)`);
+  }
+  $("heatLayer").style.backgroundImage = blobs.join(",");
+}
+
+function fitImage(){
+  const img = $("slideImg"), c = $("canvas");
+  if(!img.naturalWidth) return;
+  const k = Math.min(c.clientWidth/img.naturalWidth, c.clientHeight/img.naturalHeight)*0.94;
+  fitW = img.naturalWidth*k; fitH = img.naturalHeight*k;
+  img.style.width = fitW+"px"; img.style.height = fitH+"px";
+  applyTransform();
+}
+$("slideImg").addEventListener("load", fitImage);
+window.addEventListener("resize", ()=>{ if(cur) fitImage(); });
+
+function applyTransform(){
+  const c = $("canvas");
+  const maxX = Math.max(0,(fitW*z - c.clientWidth)/2), maxY = Math.max(0,(fitH*z - c.clientHeight)/2);
+  panX = Math.max(-maxX, Math.min(maxX, panX));
+  panY = Math.max(-maxY, Math.min(maxY, panY));
+  $("stage").style.transform = `translate(calc(-50% + ${panX}px), calc(-50% + ${panY}px)) scale(${z})`;
+  $("zv").textContent = (z*1).toFixed(1)+"×";
+  const mm = (2.0/z);
+  $("sbTxt").textContent = mm >= 1 ? mm.toFixed(2)+" mm" : (mm*1000).toFixed(0)+" µm";
+  // navigator viewport box
+  const nv = $("nav"), box = $("navBox");
+  const nw = nv.clientWidth, nh = nv.clientHeight || nw*(fitH/fitW);
+  const vw = Math.min(1, c.clientWidth/(fitW*z)), vh = Math.min(1, c.clientHeight/(fitH*z));
+  box.style.width = (vw*nw)+"px"; box.style.height = (vh*nh)+"px";
+  box.style.left = ((0.5 - panX/(fitW*z) - vw/2)*nw)+"px";
+  box.style.top  = ((0.5 - panY/(fitH*z) - vh/2)*nh)+"px";
+}
+$("zoom").addEventListener("input", e=>{ z=parseFloat(e.target.value); applyTransform(); });
+document.querySelectorAll("[data-z]").forEach(b=>b.addEventListener("click",()=>{
+  z=parseFloat(b.dataset.z); $("zoom").value=z; applyTransform(); }));
+$("btnReset").addEventListener("click", ()=>{ z=1; panX=0; panY=0; $("zoom").value=1; applyTransform(); });
+$("btnHeat").addEventListener("click", e=>{ $("heatLayer").classList.toggle("on"); e.target.classList.toggle("on"); });
+$("btnSeg").addEventListener("click", e=>{
+  const on = e.target.classList.toggle("on");
+  $("slideImg").style.filter = on ? "none" : "saturate(.25) contrast(1.05)"; });
+$("btnGrid").addEventListener("click", e=>{
+  const on = e.target.classList.toggle("on"); const g=$("gridLayer");
+  g.style.opacity = on ? ".55" : "0"; });
+
+/* training viewer: same gestures as the slide viewer, separate state */
+(function(){
+  const c = $("tvCanvas");
+  if(!c) return;
+  $("tvZoom").addEventListener("input", e => { tz = parseFloat(e.target.value); tvApply(); });
+  document.querySelectorAll("[data-tz]").forEach(b => b.addEventListener("click", () => {
+    tz = parseFloat(b.dataset.tz); $("tvZoom").value = tz; tvApply(); }));
+  $("tvReset").addEventListener("click", tvReset);
+  c.addEventListener("pointerdown", e => {
+    tdrag = true; tlx = e.clientX; tly = e.clientY;
+    if(c.setPointerCapture) c.setPointerCapture(e.pointerId); });
+  const end = () => tdrag = false;
+  c.addEventListener("pointerup", end);
+  c.addEventListener("pointercancel", end);
+  window.addEventListener("pointerup", end);
+  c.addEventListener("pointermove", e => {
+    if(!tdrag) return;
+    tpx += e.clientX - tlx; tpy += e.clientY - tly; tlx = e.clientX; tly = e.clientY;
+    tvApply();
+    if(tz > 1) e.preventDefault();
+  }, {passive:false});
+  c.addEventListener("wheel", e => {
+    e.preventDefault();
+    tz = Math.max(1, Math.min(8, tz * (e.deltaY < 0 ? 1.15 : 1/1.15)));
+    $("tvZoom").value = tz; tvApply(); }, {passive:false});
+  window.addEventListener("resize", () => { if(trainingReady) tvFit(); });
+})();
+
+const canvas = $("canvas");
+/* pointer events rather than mouse events, so the same code handles a
+   finger on a phone and a mouse on a laptop.                           */
+canvas.addEventListener("pointerdown", e=>{
+  dragging=true; lx=e.clientX; ly=e.clientY;
+  if(canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
+});
+const endDrag = () => dragging = false;
+canvas.addEventListener("pointerup", endDrag);
+canvas.addEventListener("pointercancel", endDrag);
+window.addEventListener("pointerup", endDrag);
+canvas.addEventListener("pointermove", e=>{
+  if(!dragging) return;
+  panX += e.clientX-lx; panY += e.clientY-ly; lx=e.clientX; ly=e.clientY;
+  applyTransform();
+  if(z > 1) e.preventDefault();          // only steal the gesture once zoomed in
+}, {passive:false});
+canvas.addEventListener("wheel", e=>{
+  e.preventDefault(); z = Math.max(1, Math.min(40, z*(e.deltaY<0?1.15:1/1.15)));
+  $("zoom").value=z; applyTransform(); }, {passive:false});
+document.querySelectorAll(".rtabs button").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.rt)));
+
+/* patch-grid overlay */
+(function(){
+  const g = document.createElement("div");
+  g.id="gridLayer";
+  g.style.cssText="position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .2s;"+
+    "background-image:repeating-linear-gradient(0deg,rgba(0,255,190,.9) 0 1px,transparent 1px 34px),"+
+    "repeating-linear-gradient(90deg,rgba(0,255,190,.9) 0 1px,transparent 1px 34px)";
+  $("stage").appendChild(g);
+})();
+
+/* ====================== STAT BAND COUNT-UP ========================== */
+/* Runs once, when the band first scrolls into view. The figures are
+   deliberately rounded ("1,000+"), so the animation counts to the round
+   number rather than to a precise cohort size that will change.        */
+function runCounters(){
+  const els = [...document.querySelectorAll("[data-count]")];
+  if(!els.length) return;
+  const still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const settle = el => el.textContent = (+el.dataset.count).toLocaleString();
+  if(still){ els.forEach(settle); return; }
+
+  const DUR = 1500;
+  const run = el => {
+    const target = +el.dataset.count;
+    const t0 = performance.now();
+    const step = now => {
+      const t = Math.min(1, (now - t0) / DUR);
+      const e = 1 - Math.pow(1 - t, 3);          // ease-out cubic: fast, then settles
+      el.textContent = Math.round(target * e).toLocaleString();
+      if(t < 1) requestAnimationFrame(step); else settle(el);
+    };
+    requestAnimationFrame(step);
+  };
+
+  const band = document.querySelector(".statband");
+  if(!("IntersectionObserver" in window) || !band){ els.forEach(run); return; }
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => { if(en.isIntersecting){ els.forEach(run); io.disconnect(); } });
+  }, {threshold:.35});
+  io.observe(band);
+}
+
+/* ============================ ANALYTICS ============================= */
+/* Hand-rolled SVG. No chart library, because the page has to run from
+   file:// with no network. Colour roles come from the CSS tokens in :root;
+   the categorical order is fixed and never cycled (see web_app.md 3.8).   */
+const SER = ["--s1","--s2","--s3","--s4","--s5","--s6","--s7","--s8"];
+const tok = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const vizState = {site:"", stain:""};
+
+const TIP = document.createElement("div");
+TIP.className = "viztip"; document.body.appendChild(TIP);
+function tipShow(e, html){
+  TIP.innerHTML = html; TIP.classList.add("on");
+  const r = TIP.getBoundingClientRect();
+  let x = e.clientX + 14, y = e.clientY - r.height - 12;
+  if(x + r.width > innerWidth - 12) x = e.clientX - r.width - 14;
+  if(y < 8) y = e.clientY + 18;
+  TIP.style.left = x + "px"; TIP.style.top = y + "px";
+}
+const tipHide = () => TIP.classList.remove("on");
+
+function vizRows(){
+  return SLIDES.filter(s =>
+    (!vizState.site  || s.site  === vizState.site) &&
+    (!vizState.stain || s.stain === vizState.stain));
+}
+function tally(rows, keyfn){
+  const m = new Map();
+  rows.forEach(r => { const k = keyfn(r); m.set(k, (m.get(k)||0)+1); });
+  return [...m.entries()].sort((a,b)=>b[1]-a[1]);
+}
+const pct = (v,t) => t ? (v/t*100) : 0;
+const fmtPct = v => (v<1 && v>0 ? "<1" : Math.round(v)) + "%";
+
+/* ---- rounded-end bar paths: 4px radius on the data end only ---- */
+function barH(x,y,w,h,r){                       // horizontal, grows right
+  r = Math.max(0, Math.min(r, w, h/2));
+  return `M${x},${y}h${w-r}a${r},${r} 0 0 1 ${r},${r}v${h-2*r}a${r},${r} 0 0 1 ${-r},${r}H${x}z`;
+}
+function barV(x,y,w,h,r){                       // vertical, grows up from y+h
+  r = Math.max(0, Math.min(r, h, w/2));
+  return `M${x},${y+h}V${y+r}a${r},${r} 0 0 1 ${r},${-r}h${w-2*r}a${r},${r} 0 0 1 ${r},${r}V${y+h}z`;
+}
+
+/* ------------------------------ donut ------------------------------- */
+function drawDonut(host, legendHost, data, onClick){
+  const total = data.reduce((a,d)=>a+d.v,0), S=260, R=118, r=76, cx=S/2, cy=S/2;
+  const GAP = 1.6;                              // degrees of surface between slices
+  let ang = -90, paths = "";
+  data.forEach((d,i)=>{
+    const sweep = pct(d.v,total)*3.6;
+    const a0 = ang + GAP/2, a1 = ang + sweep - GAP/2;
+    ang += sweep;
+    if(a1 <= a0) return;
+    const rad = a => (a*Math.PI)/180;
+    const P = (rr,a) => [cx+rr*Math.cos(rad(a)), cy+rr*Math.sin(rad(a))];
+    const big = (a1-a0) > 180 ? 1 : 0;
+    const [x1,y1]=P(R,a0), [x2,y2]=P(R,a1), [x3,y3]=P(r,a1), [x4,y4]=P(r,a0);
+    paths += `<path class="mk" data-i="${i}" d="M${x1},${y1}A${R},${R} 0 ${big} 1 ${x2},${y2}
+              L${x3},${y3}A${r},${r} 0 ${big} 0 ${x4},${y4}Z" fill="${d.c}"></path>`;
+  });
+  host.innerHTML = `<svg class="viz" viewBox="0 0 ${S} ${S}" style="max-width:290px;margin:0 auto">
+      ${paths}
+      <text x="${cx}" y="${cy-6}" text-anchor="middle" style="font-size:27px;font-weight:700;
+        fill:var(--navy-800);letter-spacing:-.03em" id="dcN">${total.toLocaleString()}</text>
+      <text x="${cx}" y="${cy+15}" text-anchor="middle" class="ax" id="dcL">slides in scope</text>
+    </svg>`;
+  legendHost.innerHTML = data.map((d,i)=>
+    `<div data-i="${i}" style="flex:1 1 46%"><i style="background:${d.c}"></i>
+       <span>${esc(d.k)}</span><b>${fmtPct(pct(d.v,total))}</b></div>`).join("");
+
+  const marks = host.querySelectorAll(".mk");
+  const focus = i => {
+    marks.forEach(m => m.classList.toggle("dim", i!==null && +m.dataset.i!==i));
+    const cN = host.querySelector("#dcN"), cL = host.querySelector("#dcL");
+    cN.textContent = i===null ? total.toLocaleString() : data[i].v.toLocaleString();
+    cL.textContent = i===null ? "slides in scope" : data[i].k;
+  };
+  marks.forEach(m=>{
+    const i = +m.dataset.i;
+    m.addEventListener("mousemove", e => { focus(i);
+      tipShow(e, `<b>${esc(data[i].k)}</b><span>${data[i].v.toLocaleString()} slides &middot; ${fmtPct(pct(data[i].v,total))}</span>`); });
+    m.addEventListener("mouseleave", ()=>{ focus(null); tipHide(); });
+    m.addEventListener("click", ()=> onClick && onClick(data[i]));
+  });
+  legendHost.querySelectorAll("[data-i]").forEach(el=>{
+    const i = +el.dataset.i;
+    el.addEventListener("mouseenter", ()=>focus(i));
+    el.addEventListener("mouseleave", ()=>focus(null));
+    el.addEventListener("click", ()=> onClick && onClick(data[i]));
+  });
+}
+
+/* -------------------- horizontal bars, one hue ---------------------- */
+function drawHBars(host, data, opts={}){
+  const W=680, rowH=opts.rowH||30, padL=opts.padL||208, padR=54,
+        H=data.length*rowH+8, max=Math.max(...data.map(d=>d.v),1), col=opts.color||tok("--s1");
+  let out = "";
+  data.forEach((d,i)=>{
+    const y=i*rowH+4, h=rowH-12, w=Math.max(3,(W-padL-padR)*d.v/max);
+    out += `<text x="${padL-12}" y="${y+h/2+4}" text-anchor="end" class="ax"
+              style="fill:var(--ink-600)">${esc(d.short||d.k)}</text>
+            <path class="mk" data-i="${i}" d="${barH(padL,y,w,h,4)}" fill="${col}"></path>
+            <text x="${padL+w+8}" y="${y+h/2+4}" class="vl">${d.v.toLocaleString()}</text>`;
+  });
+  host.innerHTML = `<svg class="viz wide" viewBox="0 0 ${W} ${H}">${out}</svg>`;
+  host.querySelectorAll(".mk").forEach(m=>{
+    const d = data[+m.dataset.i];
+    m.addEventListener("mousemove", e => tipShow(e,
+      `<b>${esc(d.k)}</b><span>${d.v.toLocaleString()} slides${d.extra?" &middot; "+d.extra:""}</span>`));
+    m.addEventListener("mouseleave", tipHide);
+    m.addEventListener("click", ()=> opts.onClick && opts.onClick(d));
+  });
+}
+
+/* --------------------- vertical bars / histogram -------------------- */
+function niceMax(v){                            // round the axis up to 1/2/2.5/5 x 10^k
+  if(v <= 0) return 1;
+  const e = Math.pow(10, Math.floor(Math.log10(v))), r = v/e;
+  return (r<=1 ? 1 : r<=1.5 ? 1.5 : r<=2 ? 2 : r<=2.5 ? 2.5 : r<=3 ? 3 : r<=4 ? 4 : r<=5 ? 5 : 10) * e;
+}
+function drawVBars(host, data, opts={}){
+  const W=600, H=230, padB=40, padT=16, padL=42,
+        max=niceMax(Math.max(...data.map(d=>d.v),1)), n=data.length,
+        slot=(W-padL-10)/n, bw=Math.min(opts.maxBar||56, slot-6);
+  let grid="", bars="";
+  for(let g=0; g<=4; g++){
+    const y = padT + (H-padT-padB)*g/4, val = Math.round(max*(1-g/4));
+    grid += `<line class="gl" x1="${padL}" y1="${y}" x2="${W}" y2="${y}"></line>
+             <text x="${padL-8}" y="${y+4}" text-anchor="end" class="ax">${val}</text>`;
+  }
+  data.forEach((d,i)=>{
+    const h=Math.max(2,(H-padT-padB)*d.v/max), x=padL+slot*i+(slot-bw)/2, y=H-padB-h;
+    bars += `<path class="mk" data-i="${i}" d="${barV(x,y,bw,h,4)}" fill="${d.c||opts.color||tok("--s1")}"></path>
+             <text x="${x+bw/2}" y="${H-padB+17}" text-anchor="middle" class="ax">${esc(d.k)}</text>`;
+    if(opts.labelValues)
+      bars += `<text x="${x+bw/2}" y="${y-7}" text-anchor="middle" class="vl">${d.v.toLocaleString()}</text>`;
+  });
+  host.innerHTML = `<svg class="viz wide" viewBox="0 0 ${W} ${H}">${grid}${bars}</svg>`;
+  host.querySelectorAll(".mk").forEach(m=>{
+    const d = data[+m.dataset.i];
+    m.addEventListener("mousemove", e => tipShow(e,
+      `<b>${esc(d.full||d.k)}</b><span>${d.v.toLocaleString()} slides${d.extra?" &middot; "+d.extra:""}</span>`));
+    m.addEventListener("mouseleave", tipHide);
+    m.addEventListener("click", ()=> opts.onClick && opts.onClick(d));
+  });
+}
+
+/* --------------------------- table views ---------------------------- */
+const TBL = {};
+function tableHTML(head, rows){
+  return `<table class="dt"><thead><tr><th>${head[0]}</th><th>${head[1]}</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${r[1].toLocaleString()}</td></tr>`).join("")}</tbody></table>`;
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-tbl]");
+  if(!b) return;
+  const key = b.dataset.tbl, host = $(key+"Table"), on = b.classList.toggle("on");
+  host.innerHTML = on && TBL[key] ? tableHTML(TBL[key].head, TBL[key].rows) : "";
+});
+
+/* --------------------------- the page ------------------------------- */
+const AGE_BINS = [[0,39,"<40"],[40,49,"40s"],[50,59,"50s"],
+                  [60,69,"60s"],[70,79,"70s"],[80,200,"80+"]];
+const STAGE_GROUP = st => st==="Not staged" ? "Not staged" : st[0]==="I" ? st.replace(/[ABC]$/,"") : st;
+
+function renderAnalytics(){
+  const rows = vizRows(), total = rows.length;
+  const cases = new Set(rows.map(r=>r.caseId)).size;
+  $("vizN").textContent = total.toLocaleString();
+  $("vizC").textContent = cases.toLocaleString();
+
+  if(!total){                                   // a filter combination with no slides
+    const msg = `<p class="muted" style="padding:26px 0;text-align:center;font-size:13.5px">
+      No slides match these filters.</p>`;
+    ["donutWrap","dxWrap","ageWrap","stageWrap","stainWrap","qcWrap"].forEach(id => $(id).innerHTML = msg);
+    $("donutLegend").innerHTML = "";
+    ["donut","dx","age","stage","stain"].forEach(k => { $(k+"Table").innerHTML = ""; delete TBL[k]; });
+    document.querySelectorAll("[data-tbl]").forEach(b => b.classList.remove("on"));
+    $("vizKpis").innerHTML = [["Slides in scope","0","nothing selected"],["Median age","n/a",""],
+      ["Female","n/a",""],["Heat-map published","n/a",""]]
+      .map(([l,v,d])=>`<div class="kpi"><div class="n">${v}</div><div class="l">${l}</div><div class="d">${d}</div></div>`).join("");
+    $("donutTitle").textContent = "Slides by primary site";
+    $("donutSub").textContent = "Share of the cohort in scope";
+    return;
+  }
+
+  /* KPI tiles */
+  const ages = rows.map(r=>r.age).sort((a,b)=>a-b);
+  const median = ages.length ? ages[Math.floor(ages.length/2)] : 0;
+  const female = rows.filter(r=>r.sex==="Female").length;
+  const hm     = rows.filter(r=>r.heat).length;
+  $("vizKpis").innerHTML = [
+    ["Slides in scope", total.toLocaleString(), cases.toLocaleString()+" cases"],
+    ["Median age", median+"<small> y</small>", ages.length ? ages[0]+" to "+ages[ages.length-1]+" years" : "no slides"],
+    ["Female", fmtPct(pct(female,total)), female.toLocaleString()+" of "+total.toLocaleString()+" slides"],
+    ["Heat-map published", fmtPct(pct(hm,total)), hm.toLocaleString()+" slides have an attention overlay"]
+  ].map(([l,v,d])=>`<div class="kpi"><div class="n">${v}</div><div class="l">${l}</div><div class="d">${d}</div></div>`).join("");
+
+  /* donut: sites, or diagnoses once a site is chosen */
+  const bySite = !vizState.site;
+  const raw = tally(rows, r => bySite ? r.site : r.dx);
+  const top = raw.slice(0,6), rest = raw.slice(6).reduce((a,d)=>a+d[1],0);
+  const dd = top.map(([k,v],i)=>({k, v, c:tok(SER[i])}));
+  if(rest) dd.push({k:"Other", v:rest, c:tok("--s-other")});
+  $("donutTitle").textContent = bySite ? "Slides by primary site" : "Diagnoses within " + vizState.site;
+  $("donutSub").textContent = bySite ? "Share of the cohort in scope"
+                                     : "Share of the " + total.toLocaleString() + " slides in scope";
+  drawDonut($("donutWrap"), $("donutLegend"), dd, d => {
+    if(d.k === "Other") return;
+    for(const k in active) delete active[k];
+    active[bySite ? "site" : "dx"] = new Set([d.k]);
+    query = ""; $("q").value = ""; page = 1; location.hash = "#browse";
+  });
+  TBL.donut = {head:[bySite?"Primary site":"Diagnosis","Slides"], rows:dd.map(d=>[d.k,d.v])};
+
+  /* diagnoses */
+  const dx = tally(rows, r=>r.dx).slice(0,10)
+    .map(([k,v])=>({k, v, short: k.length>32 ? k.slice(0,31)+"\u2026" : k}));
+  drawHBars($("dxWrap"), dx, {onClick:d=>{
+    for(const k in active) delete active[k];
+    active.dx = new Set([d.k]); query=""; $("q").value=""; page=1; location.hash="#browse";
+  }});
+  TBL.dx = {head:["Diagnosis","Slides"], rows:dx.map(d=>[d.k,d.v])};
+
+  /* age histogram */
+  const age = AGE_BINS.map(([lo,hi,k])=>({k, full:"Age "+k,
+    v: rows.filter(r=>r.age>=lo && r.age<=hi).length}));
+  drawVBars($("ageWrap"), age, {labelValues:true});
+  $("ageSub").textContent = ages.length
+    ? "Median " + median + " years, range " + ages[0] + " to " + ages[ages.length-1]
+    : "No slides in scope";
+  TBL.age = {head:["Age band","Slides"], rows:age.map(d=>[d.k,d.v])};
+
+  /* stage: ordinal, one hue, dark = later */
+  const ORD = {"I":tok("--q1"),"II":tok("--q2"),"III":tok("--q3"),"IV":tok("--q4"),"Not staged":"#c9ced6"};
+  const order = ["I","II","III","IV","Not staged"];
+  const stage = order.map(k=>({k, c:ORD[k],
+    v: rows.filter(r=>STAGE_GROUP(r.stage)===k).length})).filter(d=>d.v);
+  drawVBars($("stageWrap"), stage, {labelValues:true, maxBar:72, onClick:d=>{
+    if(d.k==="Not staged"){ for(const k in active) delete active[k];
+      active.stage = new Set(["Not staged"]); page=1; location.hash="#browse"; }
+  }});
+  TBL.stage = {head:["Stage","Slides"], rows:stage.map(d=>[d.k,d.v])};
+
+  /* stains */
+  const st = tally(rows, r=>r.stain).map(([k,v])=>({k, v}));
+  drawHBars($("stainWrap"), st, {rowH:32, padL:170, onClick:d=>{
+    for(const k in active) delete active[k];
+    active.stain = new Set([d.k]); page=1; location.hash="#browse";
+  }});
+  TBL.stain = {head:["Stain","Slides"], rows:st.map(d=>[d.k,d.v])};
+
+  /* QC: status colours, always with a label, never colour alone */
+  const QCC = {"Passed":"#1baf7a","Under review":"#eda100","Failed":"#cc0000"};
+  $("qcWrap").innerHTML = `<div class="qcrow">` + ["Passed","Under review","Failed"].map(k=>{
+    const v = rows.filter(r=>r.qc===k).length;
+    return `<div><span class="dot" style="background:${QCC[k]}"></span>${k}
+              <b>${v.toLocaleString()}</b> <span class="muted">(${fmtPct(pct(v,total))})</span></div>`;
+  }).join("") + `</div>`;
+}
+
+function initAnalytics(){
+  const fill = (el, vals) => vals.forEach(v => el.insertAdjacentHTML("beforeend",
+    `<option value="${esc(v)}">${esc(v)}</option>`));
+  fill($("fSite"),   SITES.map(s=>s.name));
+  fill($("fStain"),  [...new Set(SLIDES.map(s=>s.stain))].sort());
+  const bind = (id,key) => $(id).addEventListener("change", e=>{
+    vizState[key] = e.target.value; renderAnalytics(); });
+  bind("fSite","site"); bind("fStain","stain");
+  $("fReset").addEventListener("click", ()=>{
+    vizState.site = vizState.stain = "";
+    $("fSite").value = $("fStain").value = "";
+    renderAnalytics();
+  });
+}
+
+/* ======================= REGISTRATION GATE ========================== */
+/* Front end only. No account is created and nothing leaves the tab. The
+   flag lives in a variable so a reload puts the gate back, which is what
+   a reviewer clicking through the flow wants to see.                     */
+const GATED = {browse:1, slide:1, analytics:1, training:1, aianalysis:1};
+let registered = false;
+let pending = "";                       // where the user was heading
+
+const FREE_MAIL = ["gmail.","outlook.","hotmail.","yahoo.","icloud.","proton.me","protonmail."];
+const WHERE = {browse:"the slide repository", slide:"that slide", analytics:"the analytics page",
+               training:"the training module", aianalysis:"the AI analysis page"};
+
+function showGate(target){
+  pending = target;
+  const head = target.split("/")[0];
+  $("gateTitle").textContent = "Register to open the atlas";
+  $("gateSub").textContent = "The landing page is open to anyone. The repository, the viewer "
+    + "and the analysis page sit behind this form, so we can report usage back to the "
+    + "laboratory and reach you if a slide is revised or withdrawn.";
+  $("gateWhere").textContent = "Fill this in and you will land on " + (WHERE[head] || "the atlas") + ".";
+  $("gateBar").hidden = false;
+  show("view-access");
+}
+
+function initAccess(){
+  const f = $("regForm");
+  if(!f) return;
+  f.addEventListener("submit", e=>{
+    e.preventDefault();
+    const need = ["rName","rInst","rEmail","rUse"];
+    let bad = null;
+    need.forEach(id => { if(!$(id).value.trim() && !bad) bad = id; });
+    if(!bad && !$("rT1").checked) bad = "rT1";
+    if(!bad && !$("rT2").checked) bad = "rT2";
+    if(bad){ $(bad).focus(); $(bad).scrollIntoView({block:"center",behavior:"smooth"}); return; }
+    const email = $("rEmail").value.trim().toLowerCase();
+    if(FREE_MAIL.some(d => email.includes("@"+d) || email.endsWith(d.replace(/\.$/,"")))){
+      $("rEmail").focus();
+      $("rEmail").style.borderColor = "var(--accent-600)";
+      return;
+    }
+    registered = true;
+    $("draftBar").hidden = false;
+    const target = pending || "browse";
+    pending = "";
+    if(("#" + target) === location.hash) route(); else location.hash = "#" + target;
+  });
+  $("rEmail").addEventListener("input", e=>{ e.target.style.borderColor = ""; });
+  $("draftDismiss").addEventListener("click", ()=>{ $("draftBar").hidden = true; });
+
+  /* DRAFT BYPASS. Goes with the .bypass block in the markup. Delete both. */
+  $("skipGate").addEventListener("click", ()=>{
+    registered = true;
+    $("draftBar").hidden = false;
+    const target = pending || "browse";
+    pending = "";
+    if(("#" + target) === location.hash) route(); else location.hash = "#" + target;
+  });
+}
+
+/* ======================= PATHOLOGY TRAINING ========================= */
+/* TODO: QUIZ is placeholder teaching content, not authored by a pathologist.
+   Replace the whole array with the real question set when it arrives, and
+   delete the notice at the top of #view-training when you do.
+
+   The constraint that shaped these: mock_slides holds CLAM tissue-segmentation
+   overviews, not diagnostic fields, and nothing in it has been reported. So a
+   question may not turn on the morphology, diagnosis, grade or receptor status
+   of the image on screen. Everything below is a general point about stain
+   reading that is true of any slide. Keep that rule for any question added
+   before real annotated cases exist.                                        */
+const QUIZ = [
+  {
+    q: "In a routine H&E, what does the haematoxylin component stain, and what colour?",
+    opts: ["Nuclei and other basophilic structures, blue to purple",
+           "Collagen and cytoplasm, pink to red",
+           "Lipid droplets, black",
+           "Iron deposits, bright blue"],
+    a: 0,
+    why: "Haematoxylin is a basic dye that binds acidic material, chiefly nuclear chromatin, "
+       + "so nuclei come up blue to purple. Eosin is the counterstain and takes the cytoplasm "
+       + "and collagen pink. Lipid needs a frozen section and a fat stain. The iron answer "
+       + "describes Perls Prussian blue, a different stain altogether."
+  },
+  {
+    q: "An IHC marker with a nuclear staining pattern, such as ER, PR or Ki-67, is reported how?",
+    opts: ["As the proportion of tumour nuclei that stain, with an intensity",
+           "By how complete the staining is around the cell membrane",
+           "By the granularity of the cytoplasmic signal",
+           "By the intensity of staining in the surrounding stroma"],
+    a: 0,
+    why: "Nuclear markers are scored on the percentage of tumour nuclei showing signal, "
+       + "usually with a note on intensity. Membrane completeness is how HER2 is scored, "
+       + "which is a membranous marker. Stromal staining is not the target and is read as "
+       + "background."
+  },
+  {
+    q: "Why does an IHC run need controls alongside the patient section?",
+    opts: ["To show the antibody and detection system worked on that particular run",
+           "To make the staining stronger on the patient section",
+           "To remove the need for a matching H&E",
+           "To establish the histological grade"],
+    a: 0,
+    why: "Without a control that stained as expected, a negative result cannot be told apart "
+       + "from a run that simply failed. Controls say nothing about grade, they do not change "
+       + "the patient section, and the H&E is still needed to know what tissue is there."
+  },
+  {
+    q: "Why start reading a slide at low power before going to high power?",
+    opts: ["To read the architecture and find which areas are worth a closer look",
+           "Because nuclear detail is clearest at low power",
+           "Because it removes the need for higher magnification",
+           "Because stain intensity can only be judged at low power"],
+    a: 0,
+    why: "Low power shows how the tissue is organised, where the lesion sits and how it "
+       + "relates to what is around it, which is what tells you where to go next. Nuclear "
+       + "detail needs high power. Skipping the low-power pass is how a focal finding gets "
+       + "missed."
+  }
+];
+
+/* ---- the one demonstration image, fixed so the page does not change
+        under the reader between visits ---- */
+const TRAIN_IMG = IMGS.length ? "mock_slides/preview/" + IMGS[0] : "";
+
+/* ---- a small independent pan and zoom. The slide-detail viewer is a
+        singleton wired to its own element ids and module state, so this
+        reuses its CSS and not its JS. ---- */
+let tz = 1, tpx = 0, tpy = 0, tdrag = false, tlx = 0, tly = 0;
+function tvApply(){
+  $("tvStage").style.transform =
+    `translate(calc(-50% + ${tpx}px), calc(-50% + ${tpy}px)) scale(${tz})`;
+  $("tvZv").textContent = tz.toFixed(1) + "\u00d7";
+}
+function tvFit(){
+  const c = $("tvCanvas"), im = $("tvImg");
+  if(!im.naturalWidth) return;
+  const k = Math.min(c.clientWidth / im.naturalWidth, c.clientHeight / im.naturalHeight) * 0.94;
+  im.style.width = (im.naturalWidth * k) + "px";
+  im.style.height = "auto";
+  tvApply();
+}
+function tvReset(){ tz = 1; tpx = 0; tpy = 0; $("tvZoom").value = 1; tvApply(); }
+
+let trainingReady = false;
+function openTraining(){
+  if(trainingReady) return;
+  trainingReady = true;
+  $("tvImg").src = TRAIN_IMG;
+  $("tvImg").addEventListener("load", tvFit);
+  if($("tvImg").complete) tvFit();
+  renderQuiz();
+}
+
+/* ---- quiz ---- */
+let answered = {};              // index -> chosen option
+function renderQuiz(){
+  $("qTotal").textContent = QUIZ.length;
+  $("qList").innerHTML = QUIZ.map((item, i) => `
+    <div class="q" id="q${i}">
+      <span class="qn">Question ${i + 1}</span>
+      <h3>${esc(item.q)}</h3>
+      <div class="opts">
+        ${item.opts.map((o, j) => `
+          <button type="button" class="opt-a" data-q="${i}" data-o="${j}">
+            <span class="mk">${String.fromCharCode(65 + j)}</span><span>${esc(o)}</span>
+          </button>`).join("")}
+      </div>
+      <div class="qcheck"><button class="btn btn-primary btn-sm" data-check="${i}" disabled>Check answer</button></div>
+    </div>`).join("");
+  answered = {};
+  scoreQuiz();
+}
+function scoreQuiz(){
+  const done = Object.keys(answered).filter(k => answered[k].checked);
+  const right = done.filter(k => answered[k].pick === QUIZ[k].a).length;
+  $("qScore").textContent = right;
+  $("qDone").textContent = done.length === QUIZ.length
+    ? right + " of " + QUIZ.length + " correct. Reading, not recall, is the point."
+    : done.length + " of " + QUIZ.length + " answered.";
+}
+document.addEventListener("click", e => {
+  const pick = e.target.closest("[data-o]");
+  if(pick){
+    const i = +pick.dataset.q;
+    if(answered[i] && answered[i].checked) return;        // locked once checked
+    answered[i] = {pick: +pick.dataset.o, checked: false};
+    const q = $("q" + i);
+    q.querySelectorAll(".opt-a").forEach(b => b.classList.remove("right", "wrong"));
+    pick.style.borderColor = "var(--link)";
+    q.querySelectorAll(".opt-a").forEach(b => { if(b !== pick) b.style.borderColor = ""; });
+    q.querySelector("[data-check]").disabled = false;
+    return;
+  }
+  const chk = e.target.closest("[data-check]");
+  if(chk){
+    const i = +chk.dataset.check;
+    if(!answered[i] || answered[i].checked) return;
+    answered[i].checked = true;
+    const q = $("q" + i), item = QUIZ[i];
+    q.classList.add("checked");
+    q.querySelectorAll(".opt-a").forEach(b => {
+      b.style.borderColor = "";
+      const j = +b.dataset.o;
+      if(j === item.a) b.classList.add("right");
+      else if(j === answered[i].pick) b.classList.add("wrong");
+    });
+    chk.remove();
+    q.insertAdjacentHTML("beforeend",
+      `<p class="why"><b>${answered[i].pick === item.a ? "Correct." : "Not quite."}</b> ${esc(item.why)}</p>`);
+    scoreQuiz();
+  }
+});
+
+/* ========================= HERO SLIDESHOW =========================== */
+/* Two stacked layers cross-fade. The incoming layer pans slowly for the
+   whole time it is on screen, so the movement carries through the fade.  */
+const HERO_HOLD = 5000, HERO_FADE = 1100, HERO_PAN = 6600;
+const PANS = [
+  ["scale(1.38) translate(-4%,0)",  "scale(1.38) translate(4%,0)"],
+  ["scale(1.38) translate(0,-4%)",  "scale(1.38) translate(0,4%)"],
+  ["scale(1.38) translate(4%,0)",   "scale(1.38) translate(-4%,0)"],
+  ["scale(1.38) translate(0,4%)",   "scale(1.38) translate(0,-4%)"]
+];
+function startHeroShow(){
+  if(!IMGS.length) return;
+  const layers = [$("hsA"), $("hsB")];
+  const order  = IMGS.slice();
+  for(let i=order.length-1;i>0;i--){ const j=Math.floor(R()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; }
+  const url = i => "mock_slides/preview/" + order[i % order.length];
+  const still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  let i = 0, front = 0;
+  const paint = (el, idx, pan) => {
+    el.style.backgroundImage = `url(${url(idx)})`;
+    if(still){ el.style.transform = "scale(1.32)"; return; }
+    const [from, to] = PANS[pan % PANS.length];
+    el.style.transition = "none";
+    el.style.transform  = from;
+    void el.offsetWidth;                       // flush, so the pan starts from `from`
+    el.style.transition = `transform ${HERO_PAN}ms linear, opacity ${HERO_FADE}ms ease`;
+    el.style.transform  = to;
+  };
+
+  paint(layers[0], 0, 0);
+  layers[0].classList.add("on");
+  if(still) return;                            // one frame, no rotation
+  new Image().src = url(1);
+
+  setInterval(()=>{
+    const next = 1 - front, idx = ++i;
+    paint(layers[next], idx, idx);
+    layers[next].classList.add("on");
+    layers[front].classList.remove("on");
+    front = next;
+    new Image().src = url(idx + 1);            // preload the one after this
+  }, HERO_HOLD + HERO_FADE);
+}
+
+/* ============================== THEME =============================== */
+/* The attribute is already on <html> from the head script; this only
+   handles the click and keeps the label in step with what the button
+   will do next.                                                        */
+function applyTheme(mode){
+  const dark = mode === "dark";
+  document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+  const b = $("themeBtn");
+  const label = dark ? "Switch to light theme" : "Switch to dark theme";
+  b.setAttribute("aria-label", label);
+  b.setAttribute("title", label);
+  b.setAttribute("aria-pressed", dark ? "true" : "false");
+}
+function initTheme(){
+  let saved = null;
+  try{ saved = localStorage.getItem("theme"); }catch(e){}
+  applyTheme(saved === "dark" ? "dark" : "light");
+  $("themeBtn").addEventListener("click", ()=>{
+    const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try{ localStorage.setItem("theme", next); }catch(e){}
+  });
+}
+
+/* ============================= ROUTER =============================== */
+const VIEWS = ["view-home","view-browse","view-slide","view-analytics","view-access",
+               "view-training","view-aianalysis","view-todo"];
+const TODO = {
+  docs:["Documentation","Metadata schema, REST API reference and worked examples for pulling slides in bulk. Planned for draft 3."],
+  contact:["Contact","Who to email about data, collaborations and corrections. Waiting on the contact address."]
+};
+function show(v){ VIEWS.forEach(x=>$(x).classList.toggle("hide", x!==v)); }
+
+function route(){
+  const h = location.hash.replace(/^#/,"") || "home";
+  const [head, arg] = h.split("/");
+  document.querySelectorAll("nav.main a").forEach(a=>a.classList.toggle("active", a.dataset.nav===head));
+
+  if(GATED[head] && !registered){ showGate(h); window.scrollTo(0,0); return; }
+
+  if(head==="slide" && arg){ show("view-slide"); openSlide(decodeURIComponent(arg)); }
+  else if(head==="browse"){ show("view-browse"); renderResults(); }
+  else if(head==="analytics"){ show("view-analytics"); renderAnalytics(); }
+  else if(head==="training"){ show("view-training"); openTraining(); }
+  else if(head==="aianalysis"){ show("view-aianalysis"); }
+  else if(head==="access"){
+    $("gateBar").hidden = true;
+    $("gateTitle").textContent = "Register for access";
+    show("view-access");
+  }
+  else if(TODO[head]){ show("view-todo"); $("todoTitle").textContent=TODO[head][0]; $("todoBody").textContent=TODO[head][1]; }
+  else {
+    show("view-home");
+    /* the landing page is one scroll, so #s01 and friends are anchors on it
+       rather than routes. Jump there instead of resetting to the top.      */
+    const sec = /^s0[0-4]$/.test(head) ? $(head) : null;
+    if(sec){ sec.scrollIntoView({block:"start"}); syncSecIndex(); return; }
+  }
+  window.scrollTo(0,0);
+  syncSecIndex();
+}
+
+/* ------- section index: highlight whichever section is on screen ------- */
+const SECS = ["s00","s01","s02"];
+function syncSecIndex(){
+  const idx = $("secIndex");
+  if(!idx || $("view-home").classList.contains("hide")) return;
+  let cur = SECS[0];
+  SECS.forEach(id=>{ const el = $(id); if(el && el.getBoundingClientRect().top <= 200) cur = id; });
+  idx.querySelectorAll("a").forEach(a=>a.classList.toggle("on", a.dataset.sec===cur));
+}
+window.addEventListener("scroll", syncSecIndex, {passive:true});
+window.addEventListener("hashchange", route);
+
+/* =========================== EVENT WIRING =========================== */
+document.addEventListener("change", e=>{
+  const fk = e.target.dataset && e.target.dataset.fk;
+  if(fk){
+    active[fk] = active[fk] || new Set();
+    e.target.checked ? active[fk].add(e.target.value) : active[fk].delete(e.target.value);
+    if(!active[fk].size) delete active[fk];
+    page=1; renderResults();
+  }
+});
+document.addEventListener("click", e=>{
+  const chip = e.target.closest("[data-ck]");
+  if(chip){
+    if(chip.dataset.ck==="__q"){ query=""; $("q").value=""; }
+    else { active[chip.dataset.ck].delete(chip.dataset.cv); if(!active[chip.dataset.ck].size) delete active[chip.dataset.ck]; }
+    page=1; renderResults(); return;
+  }
+  const pg = e.target.closest("[data-p]");
+  if(pg){ page=parseInt(pg.dataset.p,10); renderResults(); window.scrollTo(0,0); return; }
+  const row = e.target.closest("tr[data-id], .scard[data-id]");
+  if(row){ location.hash = "#slide/"+row.dataset.id; return; }
+  const organ = e.target.closest("[data-site]");
+  if(organ){ for(const k in active) delete active[k];
+    active.site = new Set([organ.dataset.site]); query=""; page=1; }
+  const ex = e.target.closest("[data-ex]");
+  if(ex){ query = ex.dataset.ex; $("q").value = query; page=1; location.hash="#browse"; }
+});
+$("clearAll").addEventListener("click", ()=>{ for(const k in active) delete active[k];
+  query=""; $("q").value=""; page=1; renderResults(); });
+$("q").addEventListener("input", e=>{ query=e.target.value.trim(); page=1; renderResults(); });
+$("sort").addEventListener("change", e=>{ sortKey=e.target.value; renderResults(); });
+$("per").addEventListener("change", e=>{ perPage=parseInt(e.target.value,10); page=1; renderResults(); });
+$("vTable").addEventListener("click", ()=>{ mode="table"; $("vTable").classList.add("on"); $("vGrid").classList.remove("on");
+  $("tableWrap").classList.remove("hide"); $("gridWrap").classList.add("hide"); });
+$("vGrid").addEventListener("click", ()=>{ mode="grid"; $("vGrid").classList.add("on"); $("vTable").classList.remove("on");
+  $("gridWrap").classList.remove("hide"); $("tableWrap").classList.add("hide"); });
+$("heroSearch").addEventListener("submit", ()=>{ query=$("heroQ").value.trim(); $("q").value=query; page=1; location.hash="#browse"; });
+$("expBtn").addEventListener("click", ()=>{
+  const rows = sortRows(filtered());
+  const head = ["slide_id","case_id","primary_site","diagnosis","icd_o_3","grade","stage","sex","age","stain","magnification","mpp","size_mb","laboratory","qc","release"];
+  const csv = [head.join(",")].concat(rows.map(s=>[s.slideId,s.caseId,s.site,'"'+s.dx+'"',s.icd,s.grade,s.stage,
+      s.sex,s.age,s.stain,s.mag,s.mpp,s.sizeMb,'"'+s.lab+'"',s.qc,s.released].join(","))).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download = "histoveya_manifest.csv"; a.click();
+});
+
+/* ============================== BOOT ================================ */
+initTheme();
+$("qReset").addEventListener("click", ()=>{ renderQuiz(); window.scrollTo(0,0); });
+initAnalytics();
+initAccess();
+runCounters();
+
+/* the filter rail is hidden behind a toggle on narrow screens */
+$("fToggle").addEventListener("click", ()=>{
+  const rail = document.querySelector(".facets");
+  const open = rail.classList.toggle("show");
+  $("fToggle").setAttribute("aria-expanded", open);
+  $("fToggle").textContent = open ? "Hide filters" : "Filters";
+  if(open) rail.scrollIntoView({block:"nearest", behavior:"smooth"});
+});
+
+/* cards read far better than a 13-column table on a phone */
+if(window.innerWidth <= 760){
+  mode = "grid";
+  $("vGrid").classList.add("on"); $("vTable").classList.remove("on");
+  $("gridWrap").classList.remove("hide"); $("tableWrap").classList.add("hide");
+}
+renderHome();
+renderResults();
+route();
+startHeroShow();
+</script>
+</body>
+</html>
